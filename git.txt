@@ -70,3 +70,15 @@ Before submitting a PR:
 2. Test on Android emulator
 3. Test responsive design
 4. Verify dark mode worksgit 
+
+
+# Clean everything and start fresh
+rm -rf node_modules
+rm -rf ios
+rm -rf android
+rm -rf dist
+npm install
+npm run build
+npx cap add ios
+npx cap add android
+npx cap sync
