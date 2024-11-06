@@ -7,11 +7,28 @@
     "cleartext": true,
     "iosScheme": "ionic"
   },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  },
   "ios": {
     "contentInset": "automatic",
-    "backgroundColor": "#111827"
+    "backgroundColor": "#111827",
+    "webView": {
+      "allowsInlineMediaPlayback": true,
+      "allowsAirPlayForMediaPlayback": true,
+      "allowsBackForwardNavigationGestures": true,
+      "allowsLinkPreview": true
+    }
   },
   "android": {
-    "backgroundColor": "#111827"
+    "backgroundColor": "#111827",
+    "webView": {
+      "allowFileAccess": true,
+      "allowFileAccessFromFileURLs": true,
+      "allowUniversalAccessFromFileURLs": true,
+      "mixedContent": true
+    }
   }
 }

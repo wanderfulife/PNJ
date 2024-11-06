@@ -1,99 +1,84 @@
 <script setup>
-import { ref, computed } from 'vue'
-import ChatList from './components/ChatList.vue'
-import ChatArea from './components/ChatArea.vue'
+import { onMounted, watch } from 'vue';
+import ChatArea from './components/ChatArea.vue';
+import ChatList from './components/ChatList.vue';
+import LoginView from './views/LoginView.vue';
+import { useAuth } from './composables/useAuth';
 
-// Current user with default values
-const currentUser = ref({
-  id: 1,
-  name: 'You',
-  avatar: '/placeholder.svg?height=40&width=40'
-})
+const { user, loading, isInitialized, checkAuthState, logout } = useAuth();
 
-// Chat data
-const chats = ref([
-  {
-    id: 1,
-    name: "Sarah's AI",
-    avatar: '/placeholder.svg?height=40&width=40',
-    online: true,
-    lastMessage: "That's fascinating! I can see why you'd enjoy...",
-    lastMessageTime: '2:31 PM',
-    unreadCount: 2,
-    messages: [
-      {
-        id: 1,
-        content: "Hi! I'd love to learn more about your interests. What kind of activities do you enjoy?",
-        sender: 2,
-        time: '2:30 PM',
-        read: true
-      },
-      {
-        id: 2,
-        content: "I'm really into hiking and photography. I love capturing beautiful landscapes!",
-        sender: 1,
-        time: '2:31 PM',
-        read: true
-      }
-    ]
+onMounted(async () => {
+  console.log('App mounted, checking auth state...');
+  await checkAuthState();
+});
+
+const handleLogout = async () => {
+  try {
+    console.log('Handling logout...');
+    await logout();
+  } catch (error) {
+    console.error('Logout error:', error);
   }
-])
+};
 
-const activeTab = ref('All')
-const searchQuery = ref('')
-const selectedChat = ref(chats.value[0])
-const showChatList = ref(true)
+// Debug watcher
+watch(user, (newValue) => {
+  console.log('User state changed:', newValue ? 'Logged in' : 'Not logged in');
+});
 
-const handleChatSelect = (chat) => {
-  selectedChat.value = chat
-  if (window.innerWidth < 768) {
-    showChatList.value = false
-  }
-}
-
-const handleSendMessage = (message) => {
-  if (!selectedChat.value) return
-
-  const newMessage = {
-    id: Date.now(),
-    content: message,
-    sender: currentUser.value.id,
-    time: new Date().toLocaleTimeString('en-US', { 
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true 
-    }),
-    read: false
-  }
-
-  selectedChat.value.messages.push(newMessage)
-  selectedChat.value.lastMessage = message
-  selectedChat.value.lastMessageTime = newMessage.time
-}
+watch(isInitialized, (newValue) => {
+  console.log('Auth initialized:', newValue);
+});
 </script>
 
 <template>
-  <div class="h-full w-full flex flex-col bg-gray-900 text-gray-100">
-    <!-- Mobile view -->
-    <div class="flex flex-col h-full w-full">
-      <ChatList
-        v-if="showChatList"
-        :current-user="currentUser"
-        :chats="chats"
-        :selected-chat="selectedChat"
-        :active-tab="activeTab"
-        :search-query="searchQuery"
-        @update:active-tab="tab => activeTab = tab"
-        @update:search-query="query => searchQuery = query"
-        @select-chat="handleChatSelect"
-      />
-      <ChatArea
-        v-else
-        :selected-chat="selectedChat"
-        :current-user="currentUser"
-        @send-message="handleSendMessage"
-        @back="showChatList = true"
-      />
-    </div>
+  <div class="min-h-screen bg-gray-900">
+    <template v-if="!isInitialized || loading">
+      <div class="flex items-center justify-center min-h-screen">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+      </div>
+    </template>
+
+    <template v-else>
+      <div v-if="!user">
+        <LoginView />
+      </div>
+
+      <div v-else class="flex flex-col h-screen">
+        <!-- Header with Logout -->
+        <header class="bg-gray-800 shadow-lg">
+          <div class="mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-white text-xl font-semibold">NPC Social Sim</h1>
+            <div class="flex items-center">
+              <span class="text-gray-300 mr-4">{{ user.email }}</span>
+              <button
+                @click="handleLogout"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="flex flex-1 overflow-hidden">
+          <ChatList class="w-1/4 border-r border-gray-700" />
+          <ChatArea class="flex-1" />
+        </div>
+      </div>
+    </template>
   </div>
 </template>
+
+<style>
+.min-h-screen {
+  min-height: 100vh;
+  /* mobile viewport bug fix */
+  min-height: -webkit-fill-available;
+}
+
+html {
+  height: -webkit-fill-available;
+}
+</style>
