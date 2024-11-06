@@ -1,13 +1,9 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
+# Dependencies
 node_modules
+.pnp
+.pnp.js
+
+# Production
 dist
 dist-ssr
 *.local
@@ -22,3 +18,20 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# iOS
+ios/App/Pods
+ios/App/build
+ios/App/App/public
+ios/DerivedData
+ios/App.xcarchive
+ios/App.xcworkspace
+
+# Android
+android/app/build
+android/build
+android/captures
+android/gradle
+android/.gradle
+android/local.properties
+android/*.iml

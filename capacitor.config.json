@@ -3,6 +3,15 @@
   "appName": "npc-social-sim",
   "webDir": "dist",
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "cleartext": true,
+    "iosScheme": "ionic"
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#111827"
+  },
+  "android": {
+    "backgroundColor": "#111827"
   }
 }

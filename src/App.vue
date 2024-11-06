@@ -1,9 +1,9 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import ChatList from './components/ChatList.vue'
 import ChatArea from './components/ChatArea.vue'
 
-// Current user
+// Current user with default values
 const currentUser = ref({
   id: 1,
   name: 'You',
@@ -39,19 +39,18 @@ const chats = ref([
   }
 ])
 
-// UI state
 const activeTab = ref('All')
 const searchQuery = ref('')
-const selectedChat = ref(null)
+const selectedChat = ref(chats.value[0])
+const showChatList = ref(true)
 
-// Computed
-const filteredChats = computed(() => {
-  return chats.value.filter(chat => 
-    chat.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  )
-})
+const handleChatSelect = (chat) => {
+  selectedChat.value = chat
+  if (window.innerWidth < 768) {
+    showChatList.value = false
+  }
+}
 
-// Methods
 const handleSendMessage = (message) => {
   if (!selectedChat.value) return
 
@@ -62,7 +61,7 @@ const handleSendMessage = (message) => {
     time: new Date().toLocaleTimeString('en-US', { 
       hour: 'numeric',
       minute: 'numeric',
-      hour12: true
+      hour12: true 
     }),
     read: false
   }
@@ -71,30 +70,30 @@ const handleSendMessage = (message) => {
   selectedChat.value.lastMessage = message
   selectedChat.value.lastMessageTime = newMessage.time
 }
-
-// Lifecycle
-onMounted(() => {
-  // Select first chat by default
-  if (chats.value.length > 0) {
-    selectedChat.value = chats.value[0]
-  }
-})
 </script>
 
 <template>
-  <div class="flex h-screen bg-gray-900 text-gray-100">
-    <ChatList
-      :current-user="currentUser"
-      :chats="filteredChats"
-      :selected-chat="selectedChat"
-      v-model:active-tab="activeTab"
-      v-model:search-query="searchQuery"
-      @select-chat="chat => selectedChat = chat"
-    />
-    <ChatArea
-      :selected-chat="selectedChat"
-      :current-user="currentUser"
-      @send-message="handleSendMessage"
-    />
+  <div class="h-full w-full flex flex-col bg-gray-900 text-gray-100">
+    <!-- Mobile view -->
+    <div class="flex flex-col h-full w-full">
+      <ChatList
+        v-if="showChatList"
+        :current-user="currentUser"
+        :chats="chats"
+        :selected-chat="selectedChat"
+        :active-tab="activeTab"
+        :search-query="searchQuery"
+        @update:active-tab="tab => activeTab = tab"
+        @update:search-query="query => searchQuery = query"
+        @select-chat="handleChatSelect"
+      />
+      <ChatArea
+        v-else
+        :selected-chat="selectedChat"
+        :current-user="currentUser"
+        @send-message="handleSendMessage"
+        @back="showChatList = true"
+      />
+    </div>
   </div>
 </template>

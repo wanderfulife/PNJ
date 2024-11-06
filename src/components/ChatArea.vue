@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { Check, Paperclip, Image, Send } from 'lucide-vue-next'
+import { Check, Paperclip, Image, Send, ChevronLeft } from 'lucide-vue-next'
 
 const props = defineProps({
   selectedChat: {
@@ -13,7 +13,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['sendMessage'])
+const emit = defineEmits(['sendMessage', 'back'])
 const newMessage = ref('')
 const messagesContainer = ref(null)
 
@@ -25,9 +25,15 @@ const handleSendMessage = () => {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col">
+  <div class="flex-1 flex flex-col h-full">
     <!-- Chat Header -->
     <div class="h-16 border-b border-gray-800 flex items-center px-4">
+      <button 
+        class="md:hidden mr-2 p-2 hover:bg-gray-800 rounded-full"
+        @click="emit('back')"
+      >
+        <ChevronLeft class="w-5 h-5" />
+      </button>
       <div v-if="selectedChat" class="flex items-center">
         <img 
           :src="selectedChat.avatar" 
@@ -58,10 +64,10 @@ const handleSendMessage = () => {
       >
         <div 
           :class="[
-            'max-w-[70%] rounded-lg px-4 py-2',
+            'max-w-[80%] rounded-lg px-4 py-2',
             message.sender === currentUser.id 
-              ? 'bg-purple-600' 
-              : 'bg-gray-800'
+              ? 'bg-purple-600 rounded-br-none' 
+              : 'bg-gray-800 rounded-bl-none'
           ]"
         >
           <p class="text-sm">{{ message.content }}</p>

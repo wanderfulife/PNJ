@@ -1,0 +1,72 @@
+# Contributing to NPC Social Sim
+
+## Branch Naming Convention
+- `feature/` - for new features (e.g., `feature/chat-notifications`)
+- `fix/` - for bug fixes (e.g., `fix/ios-layout`)
+- `refactor/` - for code improvements (e.g., `refactor/chat-component`)
+
+## Commit Message Format
+```
+type(scope): description
+
+[optional body]
+```
+
+Types:
+- feat: New feature
+- fix: Bug fix
+- refactor: Code change that neither fixes a bug nor adds a feature
+- style: Changes that do not affect the meaning of the code
+- docs: Documentation only changes
+
+Example:
+```
+feat(chat): add message reactions feature
+
+- Added emoji reaction buttons to messages
+- Implemented reaction counter
+- Added reaction animations
+```
+
+## Pull Request Process
+1. Update documentation if needed
+2. Update the CHANGELOG.md file
+3. Get at least one code review
+4. Merge only when CI passes
+
+## Development Setup
+1. Clone the repository
+```bash
+git clone [repository-url]
+cd npc-social-sim
+```
+
+2. Install dependencies
+```bash
+npm install
+```
+
+3. Setup mobile platforms
+```bash
+npx cap add ios
+npx cap add android
+```
+
+4. Run development server
+```bash
+npm run dev
+```
+
+## Code Style Guidelines
+- Use Vue 3 Composition API with <script setup>
+- Follow Tailwind CSS class ordering conventions
+- Keep components small and focused
+- Use TypeScript types when possible
+- Comment complex logic
+
+## Testing
+Before submitting a PR:
+1. Test on iOS simulator
+2. Test on Android emulator
+3. Test responsive design
+4. Verify dark mode worksgit 
