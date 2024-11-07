@@ -2,11 +2,9 @@
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
-  indexedDBLocalPersistence, 
-  setPersistence,
   initializeAuth,
   browserLocalPersistence,
-  inMemoryPersistence
+  inMemoryPersistence 
 } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 
@@ -19,47 +17,50 @@ const firebaseConfig = {
   appId: "1:325908568285:web:159f69d049f7864db82334"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+let app = null;
+let auth = null;
 
-// Create a basic auth instance that will be enhanced later
-let auth = getAuth(app);
+export const initializeFirebase = async () => {
+  if (auth) {
+    return { app, auth };
+  }
 
-const initializeAuthForPlatform = async () => {
-  const platform = Capacitor.getPlatform();
-
-  if (platform === 'android') {
-    try {
-      await setPersistence(auth, indexedDBLocalPersistence);
-      console.log('[Android] Firebase persistence set');
-    } catch (error) {
-      console.error('[Android] Error setting persistence:', error);
+  try {
+    if (!app) {
+      app = initializeApp(firebaseConfig);
     }
-  } 
-  else if (platform === 'ios') {
-    // Re-initialize auth for iOS
-    auth = initializeAuth(app, {
-      persistence: indexedDBLocalPersistence
-    });
-    console.log('[iOS] Firebase auth initialized');
-  } 
-  else {
-    // Web platform
-    try {
-      await setPersistence(auth, browserLocalPersistence);
-      console.log('[Web] Firebase persistence set to browserLocal');
-    } catch (error) {
-      console.error('[Web] Error setting persistence:', error);
+
+    const platform = Capacitor.getPlatform();
+    console.log(`Initializing Firebase Auth for platform: ${platform}`);
+
+    if (platform === 'ios') {
       try {
-        await setPersistence(auth, inMemoryPersistence);
-        console.log('[Web] Fallback to inMemory persistence');
+        auth = initializeAuth(app, {
+          persistence: inMemoryPersistence
+        });
       } catch (error) {
-        console.error('[Web] Critical error setting persistence:', error);
+        console.warn('iOS auth initialization failed, falling back to default:', error);
+        auth = getAuth(app);
       }
+    } else {
+      auth = getAuth(app);
     }
+
+    return { app, auth };
+  } catch (error) {
+    console.error('Firebase initialization error:', error);
+    throw error;
+  }
+};
+
+export const getFirebaseAuth = () => {
+  if (!auth) {
+    return getAuth(app);
   }
   return auth;
 };
 
-// Export both auth and the initialization function
-export { auth, initializeAuthForPlatform };
+// Initialize Firebase immediately
+initializeFirebase().catch(console.error);
+
+export { auth };

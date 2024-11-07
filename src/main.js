@@ -1,19 +1,12 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import { initializeFirebase } from './firebase/config'
 import './style.css'
-import {initializeAuthForPlatform } from './firebase/config'
 
-async function initializeApp() {
-  try {
-    await initializeAuthForPlatform()
-  } catch (error) {
-    console.error('Failed to initialize auth:', error)
-  }
-  
-  const app = createApp(App)
-  app.use(router)
-  app.mount('#app')
-}
+// Initialize Firebase
+initializeFirebase().catch(console.error)
 
-initializeApp()
+const app = createApp(App)
+app.use(router)
+app.mount('#app')

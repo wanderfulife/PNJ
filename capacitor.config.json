@@ -5,11 +5,15 @@
   "server": {
     "androidScheme": "https",
     "cleartext": true,
-    "iosScheme": "ionic"
+    "iosScheme": "capacitor",
+    "hostname": "localhost"
   },
   "plugins": {
     "CapacitorHttp": {
       "enabled": true
+    },
+    "SplashScreen": {
+      "launchShowDuration": 0
     }
   },
   "ios": {
@@ -19,8 +23,12 @@
       "allowsInlineMediaPlayback": true,
       "allowsAirPlayForMediaPlayback": true,
       "allowsBackForwardNavigationGestures": true,
-      "allowsLinkPreview": true
-    }
+      "allowsLinkPreview": true,
+      "scrollEnabled": true,
+      "allowUniversalAccessFromFileURLs": true,
+      "limitsNavigationsToAppBoundDomains": true
+    },
+    "scheme": "capacitor"
   },
   "android": {
     "backgroundColor": "#111827",
