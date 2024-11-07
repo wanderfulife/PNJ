@@ -1,5 +1,4 @@
-// src/composables/useAuth.js
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { 
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -9,64 +8,74 @@ import {
 import { auth } from '../firebase/config';
 import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
+import { useRouter } from 'vue-router';
 
 export function useAuth() {
+  const router = useRouter();
+  const platform = Capacitor.getPlatform();
+  const isNativePlatform = platform === 'ios' || platform === 'android';
+  
   const user = ref(null);
   const error = ref(null);
   const loading = ref(false);
   const isInitialized = ref(false);
 
-  const platform = Capacitor.getPlatform();
+  let unsubscribe = null;
 
-  // Set up auth state listener
-  const unsubscribe = onAuthStateChanged(auth, async (userData) => {
-    console.log(`[${platform}] Auth state changed:`, userData ? 'User logged in' : 'No user');
-    if (userData) {
-      user.value = {
-        uid: userData.uid,
-        email: userData.email,
-      };
-      try {
-        await Preferences.set({
-          key: 'user',
-          value: JSON.stringify(user.value)
-        });
-        console.log(`[${platform}] User preferences saved`);
-      } catch (e) {
-        console.error(`[${platform}] Error saving user preferences:`, e);
-      }
-    } else {
-      user.value = null;
-      try {
-        await Preferences.remove({ key: 'user' });
-        console.log(`[${platform}] User preferences cleared`);
-      } catch (e) {
-        console.error(`[${platform}] Error clearing user preferences:`, e);
-      }
-    }
-    isInitialized.value = true;
-  });
-
-  const checkAuthState = async () => {
+  const saveUserToPreferences = async (userData) => {
+    if (!isNativePlatform) return; // Skip for web platform
+    
     try {
-      const userData = await Preferences.get({ key: 'user' });
-      if (userData.value) {
-        const parsedUser = JSON.parse(userData.value);
-        console.log(`[${platform}] Found stored user data:`, parsedUser);
-      }
+      await Preferences.set({
+        key: 'user',
+        value: JSON.stringify(userData)
+      });
+      console.log(`[${platform}] User preferences saved`);
     } catch (e) {
-      console.error(`[${platform}] Error checking stored auth state:`, e);
+      console.error(`[${platform}] Error saving user preferences:`, e);
     }
   };
 
+  const clearUserPreferences = async () => {
+    if (!isNativePlatform) return; // Skip for web platform
+    
+    try {
+      await Preferences.remove({ key: 'user' });
+      console.log(`[${platform}] User preferences cleared`);
+    } catch (e) {
+      console.error(`[${platform}] Error clearing user preferences:`, e);
+    }
+  };
+
+  const setupAuthObserver = () => {
+    unsubscribe = onAuthStateChanged(auth, async (userData) => {
+      console.log(`[${platform}] Auth state changed:`, userData ? 'User logged in' : 'No user');
+      
+      if (userData) {
+        user.value = {
+          uid: userData.uid,
+          email: userData.email
+        };
+        await saveUserToPreferences(user.value);
+      } else {
+        user.value = null;
+        await clearUserPreferences();
+      }
+      
+      isInitialized.value = true;
+    });
+  };
+
   const login = async (email, password) => {
-    console.log(`[${platform}] Attempting login...`);
     try {
       loading.value = true;
       error.value = null;
-      const { user: userData } = await signInWithEmailAndPassword(auth, email, password);
-      console.log(`[${platform}] Login successful, user:`, userData.uid);
-      return userData;
+      
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      if (userCredential.user) {
+        await router.replace('/chat');
+      }
+      
     } catch (e) {
       console.error(`[${platform}] Login error:`, e);
       error.value = e.message;
@@ -76,24 +85,54 @@ export function useAuth() {
     }
   };
 
-  const logout = async () => {
-    console.log(`[${platform}] Attempting logout...`);
+  const register = async (email, password) => {
     try {
+      loading.value = true;
+      error.value = null;
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      if (userCredential.user) {
+        await router.replace('/chat');
+      }
+      
+    } catch (e) {
+      console.error(`[${platform}] Registration error:`, e);
+      error.value = e.message;
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      loading.value = true;
+      error.value = null;
+      
       await signOut(auth);
-      console.log(`[${platform}] Logout successful`);
+      user.value = null;
+      await clearUserPreferences();
+      await router.replace('/login');
+      
     } catch (e) {
       console.error(`[${platform}] Logout error:`, e);
       error.value = e.message;
       throw e;
+    } finally {
+      loading.value = false;
     }
   };
 
   onMounted(() => {
-    console.log(`[${platform}] Auth component mounted`);
-    return () => {
+    console.log(`[${platform}] Auth composable mounted`);
+    setupAuthObserver();
+  });
+
+  onUnmounted(() => {
+    if (unsubscribe) {
       unsubscribe();
-      console.log(`[${platform}] Auth listener cleanup`);
-    };
+      console.log(`[${platform}] Auth observer cleanup`);
+    }
   });
 
   return {
@@ -102,7 +141,7 @@ export function useAuth() {
     loading,
     isInitialized,
     login,
-    logout,
-    checkAuthState
+    register,
+    logout
   };
 }

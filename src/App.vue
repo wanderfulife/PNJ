@@ -1,84 +1,87 @@
 <script setup>
-import { onMounted, watch } from 'vue';
-import ChatArea from './components/ChatArea.vue';
-import ChatList from './components/ChatList.vue';
-import LoginView from './views/LoginView.vue';
-import { useAuth } from './composables/useAuth';
+import { ref, onMounted } from 'vue'
+import { useAuth } from './composables/useAuth'
+import { useRouter } from 'vue-router'
 
-const { user, loading, isInitialized, checkAuthState, logout } = useAuth();
+const { user, loading: authLoading, isInitialized } = useAuth()
+const router = useRouter()
 
+// State for initial app loading
+const appReady = ref(false)
+
+// App initialization
 onMounted(async () => {
-  console.log('App mounted, checking auth state...');
-  await checkAuthState();
-});
-
-const handleLogout = async () => {
   try {
-    console.log('Handling logout...');
-    await logout();
+    // Wait for auth to initialize
+    await new Promise(resolve => {
+      const unwatch = watch(isInitialized, (initialized) => {
+        if (initialized) {
+          unwatch()
+          resolve()
+        }
+      }, { immediate: true })
+    })
+    
+    // Handle routing based on auth state
+    if (user.value) {
+      await router.replace('/chat')
+    } else {
+      await router.replace('/login')
+    }
+    
+    // Short delay for transitions
+    setTimeout(() => {
+      appReady.value = true
+    }, 100)
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error('Error initializing app:', error)
+    appReady.value = true
   }
-};
-
-// Debug watcher
-watch(user, (newValue) => {
-  console.log('User state changed:', newValue ? 'Logged in' : 'Not logged in');
-});
-
-watch(isInitialized, (newValue) => {
-  console.log('Auth initialized:', newValue);
-});
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900">
-    <template v-if="!isInitialized || loading">
-      <div class="flex items-center justify-center min-h-screen">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-      </div>
-    </template>
+  <div id="app" class="bg-gray-900">
+    <!-- Initial loading screen -->
+    <div
+      v-if="!appReady || !isInitialized"
+      class="h-full flex items-center justify-center"
+    >
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+    </div>
 
-    <template v-else>
-      <div v-if="!user">
-        <LoginView />
-      </div>
+    <!-- Main content -->
+    <router-view v-else v-slot="{ Component }">
+      <transition name="page-transition" mode="out-in">
+        <component :is="Component" :current-user="user" />
+      </transition>
+    </router-view>
 
-      <div v-else class="flex flex-col h-screen">
-        <!-- Header with Logout -->
-        <header class="bg-gray-800 shadow-lg">
-          <div class="mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="text-white text-xl font-semibold">NPC Social Sim</h1>
-            <div class="flex items-center">
-              <span class="text-gray-300 mr-4">{{ user.email }}</span>
-              <button
-                @click="handleLogout"
-                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <!-- Main Content -->
-        <div class="flex flex-1 overflow-hidden">
-          <ChatList class="w-1/4 border-r border-gray-700" />
-          <ChatArea class="flex-1" />
-        </div>
-      </div>
-    </template>
+    <!-- Auth loading overlay -->
+    <div
+      v-if="authLoading && appReady"
+      class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-purple-500"></div>
+    </div>
   </div>
 </template>
 
 <style>
-.min-h-screen {
-  min-height: 100vh;
-  /* mobile viewport bug fix */
-  min-height: -webkit-fill-available;
+#app {
+  height: 100vh;
+  height: var(--app-height);
+  display: flex;
+  flex-direction: column;
 }
 
-html {
-  height: -webkit-fill-available;
+.page-transition-enter-active,
+.page-transition-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.page-transition-enter-from,
+.page-transition-leave-to {
+  opacity: 0;
 }
 </style>

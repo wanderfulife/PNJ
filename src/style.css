@@ -1,49 +1,45 @@
+/* Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Variables Globales */
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --app-height: 100vh;
   color-scheme: dark;
-  background-color: #000;
-  color: #fff;
 }
 
-html, body {
+/* Fix pour la hauteur sur iOS */
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --app-height: -webkit-fill-available;
+  }
+}
+
+/* Reset de base */
+html,
+body {
   height: 100%;
+  height: var(--app-height);
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #000;
+  background-color: theme('colors.gray.900');
+  color: theme('colors.white');
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Configuration de base de l'app */
 #app {
   height: 100%;
-  width: 100%;
-  position: fixed;
+  height: var(--app-height);
   overflow: hidden;
-  background-color: #111827;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #4B5563;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #6B7280;
-}
-
-/* iOS safety areas */
+/* Safe Areas iOS */
 .safe-area-top {
   padding-top: env(safe-area-inset-top);
 }
@@ -58,4 +54,73 @@ html, body {
 
 .safe-area-right {
   padding-right: env(safe-area-inset-right);
+}
+
+/* Optimisations mobiles */
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --app-height: -webkit-fill-available;
+  }
+
+  input,
+  textarea {
+    font-size: 16px !important;
+    /* Empêche le zoom sur iOS */
+  }
+}
+
+/* Optimisations tactiles */
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Scrolling optimisé */
+.scrolling-touch {
+  -webkit-overflow-scrolling: touch;
+}
+
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
+/* Scrollbar personnalisée */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: theme('colors.gray.700') transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: theme('colors.gray.700');
+  border-radius: 3px;
+}
+
+/* Transitions */
+.page-transition-enter-active,
+.page-transition-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.page-transition-enter-from,
+.page-transition-leave-to {
+  opacity: 0;
+}
+
+/* Utilitaires */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+.disable-select {
+  user-select: none;
+  -webkit-user-select: none;
 }
