@@ -1,10 +1,8 @@
 <script setup>
 import { ref } from 'vue'
-import { Search, Settings, LogOut } from 'lucide-vue-next'
-import { useAuth } from '../../composables/useAuth'
+import { Search, Settings } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
-const { logout } = useAuth()
 const router = useRouter()
 
 const props = defineProps({
@@ -24,23 +22,13 @@ const props = defineProps({
 
 const emit = defineEmits(['select-chat'])
 const searchQuery = ref('')
-const isLoggingOut = ref(false)
 
 const handleChatClick = (chat) => {
   emit('select-chat', chat)
 }
 
-const handleLogout = async () => {
-  if (isLoggingOut.value) return
-  try {
-    isLoggingOut.value = true
-    await logout()
-    await router.push('/login')
-  } catch (error) {
-    console.error('Logout error:', error)
-  } finally {
-    isLoggingOut.value = false
-  }
+const goToSettings = () => {
+  router.push('/settings')
 }
 </script>
 
@@ -49,19 +37,24 @@ const handleLogout = async () => {
     <!-- Header -->
     <div class="safe-area-top px-4 pt-2 pb-3 border-b border-gray-800">
       <div class="flex items-center justify-between mb-3">
-        <h1 class="text-xl font-semibold">Messages</h1>
-        <div class="flex items-center space-x-2">
-          <button class="p-2 hover:bg-gray-800 rounded-full">
-            <Settings class="w-5 h-5" />
-          </button>
-          <button 
-            class="p-2 hover:bg-gray-800 rounded-full text-red-400"
-            :disabled="isLoggingOut"
-            @click="handleLogout"
-          >
-            <LogOut class="w-5 h-5" :class="{ 'animate-spin': isLoggingOut }" />
-          </button>
+        <!-- User Profile Section -->
+        <div class="flex items-center space-x-3">
+          <div class="relative">
+           
+          </div>
+          <div class="flex flex-col">
+            <h1 class="text-lg font-semibold">Messages</h1>
+            <p class="text-xs text-gray-400">{{ currentUser.email }}</p>
+          </div>
         </div>
+
+        <!-- Settings Button -->
+        <button 
+          class="p-2 hover:bg-gray-800 rounded-full transition-colors"
+          @click="goToSettings"
+        >
+          <Settings class="w-5 h-5" />
+        </button>
       </div>
 
       <!-- Search -->

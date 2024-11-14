@@ -1,9 +1,11 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import { auth } from '../firebase/config'
 
 // Route components
 const LoginView = () => import('../views/LoginView.vue')
 const ChatView = () => import('../views/ChatView.vue')
+const SettingsView = () => import('../views/SettingsView.vue')
 
 // Routes configuration
 const routes = [
@@ -27,6 +29,15 @@ const routes = [
     meta: { 
       requiresAuth: true,
       title: 'Chat'
+    }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: SettingsView,
+    meta: {
+      requiresAuth: true,
+      title: 'Settings'
     }
   },
   {
