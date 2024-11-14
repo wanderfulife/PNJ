@@ -1,36 +1,37 @@
 <script setup>
-import { ChevronLeft } from 'lucide-vue-next'
+import { ChevronLeft, MoreVertical } from 'lucide-vue-next'
 
-defineProps({
+const props = defineProps({
   chat: {
     type: Object,
     required: true
-  },
-  showBackButton: {
-    type: Boolean,
-    default: false
   }
 })
 
-defineEmits(['back'])
+const emit = defineEmits(['back'])
 </script>
 
 <template>
-  <div class="h-14 flex items-center px-4 border-b border-gray-800 safe-area-top">
+  <div class="flex items-center h-14 px-4 bg-gray-900 border-b border-gray-800 safe-area-top">
     <button
-      v-if="showBackButton"
       class="p-2 -ml-2 rounded-full hover:bg-gray-800"
       @click="$emit('back')"
     >
       <ChevronLeft class="w-6 h-6" />
     </button>
 
-    <div class="flex items-center flex-1 min-w-0">
-      <img
-        :src="chat.avatar"
-        :alt="chat.name"
-        class="w-8 h-8 rounded-full object-cover"
-      />
+    <div class="flex items-center flex-1 min-w-0 ml-2">
+      <div class="relative flex-shrink-0">
+        <img
+          :src="chat.avatar"
+          :alt="chat.name"
+          class="w-8 h-8 rounded-full object-cover"
+        />
+        <div 
+          v-if="chat.online" 
+          class="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border-2 border-gray-900"
+        />
+      </div>
       
       <div class="ml-3 min-w-0">
         <h2 class="text-base font-medium truncate">{{ chat.name }}</h2>
@@ -40,6 +41,15 @@ defineEmits(['back'])
       </div>
     </div>
 
-    <slot name="actions"></slot>
+    <button class="p-2 rounded-full hover:bg-gray-800">
+      <MoreVertical class="w-6 h-6" />
+    </button>
   </div>
 </template>
+
+<style scoped>
+button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+</style>

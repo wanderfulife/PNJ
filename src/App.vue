@@ -1,35 +1,21 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useAuth } from './composables/useAuth'
 import { useRouter } from 'vue-router'
 
-const { user, loading: authLoading, isInitialized } = useAuth()
 const router = useRouter()
-
-// State for initial app loading
 const appReady = ref(false)
 
-// App initialization
+// Simulate a user for testing
+const currentUser = {
+  uid: 'test123',
+  email: 'test@student.42.fr',
+  avatar: '/api/placeholder/32/32'
+}
+
 onMounted(async () => {
+  // For testing, we'll automatically go to chat view
   try {
-    // Wait for auth to initialize
-    await new Promise(resolve => {
-      const unwatch = watch(isInitialized, (initialized) => {
-        if (initialized) {
-          unwatch()
-          resolve()
-        }
-      }, { immediate: true })
-    })
-    
-    // Handle routing based on auth state
-    if (user.value) {
-      await router.replace('/chat')
-    } else {
-      await router.replace('/login')
-    }
-    
-    // Short delay for transitions
+    await router.replace('/chat')
     setTimeout(() => {
       appReady.value = true
     }, 100)
@@ -44,26 +30,22 @@ onMounted(async () => {
   <div id="app" class="bg-gray-900">
     <!-- Initial loading screen -->
     <div
-      v-if="!appReady || !isInitialized"
+      v-if="!appReady"
       class="h-full flex items-center justify-center"
     >
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
     </div>
 
     <!-- Main content -->
-    <router-view v-else v-slot="{ Component }">
+    <router-view 
+      v-else 
+      v-slot="{ Component }"
+      :current-user="currentUser"
+    >
       <transition name="page-transition" mode="out-in">
-        <component :is="Component" :current-user="user" />
+        <component :is="Component" :current-user="currentUser" />
       </transition>
     </router-view>
-
-    <!-- Auth loading overlay -->
-    <div
-      v-if="authLoading && appReady"
-      class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
-    >
-      <div class="animate-spin rounded-full h-8 w-8 border-2 border-purple-500"></div>
-    </div>
   </div>
 </template>
 
@@ -83,5 +65,12 @@ onMounted(async () => {
 .page-transition-enter-from,
 .page-transition-leave-to {
   opacity: 0;
+}
+
+/* Mobile height fix */
+@supports (-webkit-touch-callout: none) {
+  #app {
+    height: -webkit-fill-available;
+  }
 }
 </style>
