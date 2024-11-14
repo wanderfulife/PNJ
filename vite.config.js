@@ -1,20 +1,26 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
   build: {
-    target: 'es2020',  // Set target to ES2020 to support top-level await
+    target: 'es2020',
+    sourcemap: true,
     rollupOptions: {
       output: {
-        format: 'es'  // Ensure output is in ES module format
+        format: 'es'
       }
     }
   },
   optimizeDeps: {
     esbuildOptions: {
-      target: 'es2020'  // Ensure esbuild also targets ES2020
+      target: 'es2020'
+    }
+  },
+  server: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp'
     }
   }
 })

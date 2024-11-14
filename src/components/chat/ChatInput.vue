@@ -7,24 +7,27 @@ import { Capacitor } from '@capacitor/core'
 
 const emit = defineEmits(['send'])
 const message = ref('')
-const inputRef = ref(null)
+const baseInputRef = ref(null)
 const isNative = Capacitor.isNativePlatform()
 const keyboardHeight = ref(0)
 const isRecording = ref(false)
 
-// Handle message sending
+// Gestion sécurisée de l'envoi de message
 const handleSend = () => {
   if (!message.value.trim()) return
+  
   emit('send', message.value.trim())
   message.value = ''
   
-  // Restore input height after sending
-  if (inputRef.value) {
-    inputRef.value.style.height = 'auto'
-  }
+  // Réinitialisation de la hauteur différée pour assurer le montage du DOM
+  requestAnimationFrame(() => {
+    if (baseInputRef.value) {
+      baseInputRef.value.$el.style.height = '42px'
+    }
+  })
 }
 
-// Handle keyboard events for native platforms
+// Gestion du clavier pour les plateformes natives
 const setupKeyboardListeners = async () => {
   if (!isNative) return
 
@@ -41,18 +44,18 @@ const setupKeyboardListeners = async () => {
   }
 }
 
-// Handle voice recording
+// Gestion de l'enregistrement vocal
 const startRecording = async () => {
   isRecording.value = true
-  // Implement voice recording logic here
+  // Implémentation de l'enregistrement vocal
 }
 
 const stopRecording = async () => {
   isRecording.value = false
-  // Implement stop recording and send logic here
+  // Implémentation de l'arrêt de l'enregistrement
 }
 
-// Lifecycle hooks
+// Hooks de cycle de vie
 onMounted(() => {
   setupKeyboardListeners()
 })
@@ -75,7 +78,7 @@ onUnmounted(async () => {
   >
     <div class="px-4 py-2">
       <div class="flex items-end space-x-2">
-        <!-- Attachment Button -->
+        <!-- Boutons d'attachement -->
         <button 
           class="p-2 rounded-full hover:bg-gray-800 active:bg-gray-700 flex-shrink-0"
           type="button"
@@ -83,7 +86,6 @@ onUnmounted(async () => {
           <Paperclip class="w-6 h-6" />
         </button>
         
-        <!-- Image Button -->
         <button 
           class="p-2 rounded-full hover:bg-gray-800 active:bg-gray-700 flex-shrink-0"
           type="button"
@@ -91,10 +93,10 @@ onUnmounted(async () => {
           <Image class="w-6 h-6" />
         </button>
         
-        <!-- Message Input -->
+        <!-- Zone de saisie -->
         <div class="flex-1 flex items-end min-w-0">
           <BaseInput
-            ref="inputRef"
+            ref="baseInputRef"
             v-model="message"
             placeholder="Type a message"
             class="flex-1 bg-gray-800 rounded-2xl focus:ring-2 focus:ring-purple-500"
@@ -112,7 +114,7 @@ onUnmounted(async () => {
           </BaseInput>
         </div>
         
-        <!-- Send/Voice Button -->
+        <!-- Bouton d'envoi/enregistrement -->
         <div class="flex-shrink-0">
           <button
             v-if="message.trim()"
@@ -141,7 +143,7 @@ onUnmounted(async () => {
       </div>
     </div>
 
-    <!-- Recording Indicator -->
+    <!-- Indicateur d'enregistrement -->
     <div 
       v-if="isRecording"
       class="absolute left-0 right-0 bottom-full p-4 bg-gray-800 text-center text-sm"
@@ -157,20 +159,20 @@ onUnmounted(async () => {
   backdrop-filter: blur(16px);
 }
 
-/* Touch optimizations */
+/* Optimisations tactiles */
 button {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Transition effects */
+/* Effets de transition */
 .transition-colors {
   transition-property: background-color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
 
-/* iOS input optimizations */
+/* Optimisations iOS */
 @supports (-webkit-touch-callout: none) {
   input, textarea {
     font-size: 16px !important;

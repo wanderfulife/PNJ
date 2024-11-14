@@ -24,7 +24,6 @@ const emit = defineEmits(['back'])
       <div class="relative flex-shrink-0">
         <img
           :src="chat.avatar"
-          :alt="chat.name"
           class="w-8 h-8 rounded-full object-cover"
         />
         <div 

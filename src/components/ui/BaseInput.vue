@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -11,7 +11,7 @@ const props = defineProps({
     default: ''
   },
   maxHeight: {
-    type: String,
+    type: [String, Number],
     default: '120px'
   }
 })
@@ -21,10 +21,21 @@ const emit = defineEmits(['update:modelValue', 'submit'])
 const input = ref(null)
 const content = ref(props.modelValue)
 
+// Mise à jour de la hauteur sécurisée
 const updateHeight = () => {
   if (!input.value) return
-  input.value.style.height = '0'
-  input.value.style.height = Math.min(input.value.scrollHeight, parseInt(props.maxHeight)) + 'px'
+  
+  // S'assurer que l'élément est monté et a un style
+  requestAnimationFrame(() => {
+    if (input.value && input.value.style) {
+      input.value.style.height = '0'
+      const maxHeightValue = typeof props.maxHeight === 'number' 
+        ? `${props.maxHeight}px` 
+        : props.maxHeight
+      const newHeight = Math.min(input.value.scrollHeight, parseInt(maxHeightValue))
+      input.value.style.height = `${newHeight}px`
+    }
+  })
 }
 
 const onInput = (e) => {
@@ -40,6 +51,12 @@ const onKeydown = (e) => {
   }
 }
 
+// S'assurer que la hauteur est mise à jour après le montage
+onMounted(() => {
+  updateHeight()
+})
+
+// Observer les changements de valeur
 watch(() => props.modelValue, (newVal) => {
   content.value = newVal
   updateHeight()
@@ -51,7 +68,10 @@ watch(() => props.modelValue, (newVal) => {
     ref="input"
     v-model="content"
     class="w-full bg-gray-800 rounded-full px-4 py-2 text-white placeholder-gray-400 resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-purple-500"
-    :style="{ maxHeight: maxHeight }"
+    :style="{
+      maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
+      minHeight: '42px'
+    }"
     rows="1"
     :placeholder="placeholder"
     @input="onInput"

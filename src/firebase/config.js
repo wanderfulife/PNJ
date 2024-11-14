@@ -1,10 +1,10 @@
-// src/firebase/config.js
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   initializeAuth,
   browserLocalPersistence,
-  inMemoryPersistence 
+  inMemoryPersistence,
+  indexedDBLocalPersistence
 } from 'firebase/auth';
 import { Capacitor } from '@capacitor/core';
 
@@ -27,11 +27,23 @@ export const initializeFirebase = async () => {
 
   try {
     if (!app) {
-      app = initializeApp(firebaseConfig);
+      app = initializeApp({
+        ...firebaseConfig,
+        // Ajout des options de sécurité supplémentaires
+        authDomain: window.location.hostname === 'localhost' 
+          ? 'localhost' 
+          : firebaseConfig.authDomain
+      });
     }
 
     const platform = Capacitor.getPlatform();
     console.log(`Initializing Firebase Auth for platform: ${platform}`);
+
+    const persistenceOrder = [
+      indexedDBLocalPersistence,
+      browserLocalPersistence,
+      inMemoryPersistence,
+    ];
 
     if (platform === 'ios') {
       try {
@@ -43,7 +55,15 @@ export const initializeFirebase = async () => {
         auth = getAuth(app);
       }
     } else {
-      auth = getAuth(app);
+      try {
+        auth = initializeAuth(app, {
+          persistence: persistenceOrder,
+          popupRedirectResolver: undefined
+        });
+      } catch (error) {
+        console.warn('Auth initialization failed, falling back to default:', error);
+        auth = getAuth(app);
+      }
     }
 
     return { app, auth };
