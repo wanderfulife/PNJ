@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { ChevronLeft, MoreVertical } from 'lucide-vue-next'
-import { useAuthStore } from '@/stores/useAuthStore' // Ajustez le chemin selon votre structure
+import { useAuthStore } from '@/stores/useAuthStore' 
 
 const authStore = useAuthStore()
 
