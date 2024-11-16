@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/useAuthStore'
-import { useProfileStore } from '../stores/useProfileStore'
+import { useAuthStore } from '@/stores/useAuthStore'
+import { useProfileStore } from '@/stores/useProfileStore'
 import { Moon, Bell, Shield, Key, HelpCircle, LogOut, ChevronLeft, Camera, Edit2 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -124,37 +124,31 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-gray-900">
+  <div class="settings-view" :class="authStore.platform">
     <!-- Safe area top -->
-    <div class="safe-area-top" />
+    <div class="safe-area-top"></div>
 
-    <div class="flex-1 overflow-y-auto overscroll-contain custom-scrollbar">
-      <div class="max-w-2xl mx-auto p-4">
+    <div class="settings-content">
+      <div class="settings-container">
         <!-- Profile Section -->
-        <div class="bg-gray-800 rounded-2xl p-6 mb-6">
-          <div class="relative">
-            <button 
-              @click="handleBack"
-              class="absolute top-0 left-0 p-2 hover:bg-gray-700 rounded-full transition-colors"
-            >
-              <ChevronLeft class="w-5 h-5" />
+        <div class="profile-card">
+          <div class="profile-header">
+            <button @click="handleBack" class="back-button">
+              <ChevronLeft class="icon-small" />
             </button>
-            <h2 class="text-center text-xl font-semibold mb-6">Profile</h2>
+            <h2 class="title">Profile</h2>
           </div>
 
-          <div class="flex flex-col items-center space-y-4">
+          <div class="profile-content">
             <!-- Photo Profile -->
-            <div class="relative group">
+            <div class="photo-container">
               <img
                 :src="authStore.user?.photoURL"
                 :alt="authStore.user?.displayName"
-                class="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-purple-900"
+                class="profile-photo"
               />
-              <label 
-                class="absolute bottom-0 right-0 p-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white shadow-lg transition-transform transform group-hover:scale-110 cursor-pointer"
-                :class="{ 'opacity-50': isUploadingPhoto }"
-              >
-                <Camera class="w-4 h-4" />
+              <label class="photo-upload-button" :class="{ 'disabled': isUploadingPhoto }">
+                <Camera class="icon-mini" />
                 <input 
                   type="file"
                   accept="image/*"
@@ -166,48 +160,45 @@ onMounted(() => {
             </div>
 
             <!-- Edit Form -->
-            <div v-if="showProfileEdit" class="w-full space-y-4">
+            <div v-if="showProfileEdit" class="edit-form">
               <input
                 v-model="editForm.displayName"
                 type="text"
                 placeholder="Display Name"
-                class="w-full p-2 border border-gray-600 rounded-lg bg-gray-700 text-white"
+                class="form-input"
               />
               <input
                 v-model="editForm.email"
                 type="email"
                 placeholder="Email"
-                class="w-full p-2 border border-gray-600 rounded-lg bg-gray-700 text-white"
+                class="form-input"
               />
-              <div class="flex space-x-2">
+              <div class="button-group">
                 <button 
                   @click="handleProfileUpdate"
                   :disabled="authStore.loading"
-                  class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg transition-colors disabled:opacity-50"
+                  class="primary-button"
                 >
                   {{ authStore.loading ? 'Saving...' : 'Save' }}
                 </button>
                 <button 
                   @click="showProfileEdit = false"
-                  class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition-colors"
+                  class="secondary-button"
                 >
                   Cancel
                 </button>
               </div>
-              <p v-if="authStore.error" class="text-red-500 text-sm text-center">
+              <p v-if="authStore.error" class="error-message">
                 {{ authStore.error }}
               </p>
             </div>
 
             <!-- Profile Display -->
-            <div v-else class="text-center">
-              <h2 class="text-xl font-semibold">{{ authStore.user?.displayName }}</h2>
-              <p class="text-gray-400">{{ authStore.user?.email }}</p>
-              <button 
-                @click="startProfileEdit"
-                class="mt-4 inline-flex items-center space-x-2 text-purple-400 hover:text-purple-300"
-              >
-                <Edit2 class="w-4 h-4" />
+            <div v-else class="profile-info">
+              <h2 class="profile-name">{{ authStore.user?.displayName }}</h2>
+              <p class="profile-email">{{ authStore.user?.email }}</p>
+              <button @click="startProfileEdit" class="edit-button">
+                <Edit2 class="icon-mini" />
                 <span>Edit Profile</span>
               </button>
             </div>
@@ -215,53 +206,45 @@ onMounted(() => {
         </div>
 
         <!-- Settings List -->
-        <div class="bg-gray-800 rounded-2xl mb-6">
+        <div class="settings-card">
           <!-- Dark Mode Toggle -->
-          <div class="p-4 border-b border-gray-700">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <Moon class="w-5 h-5 text-gray-300" />
-                <div>
-                  <h3 class="font-medium">Dark Mode</h3>
-                  <p class="text-sm text-gray-400">Toggle dark theme</p>
-                </div>
+          <div class="settings-item">
+            <div class="settings-item-content">
+              <Moon class="icon-small text-subtle" />
+              <div class="settings-item-text">
+                <h3 class="settings-item-title">Dark Mode</h3>
+                <p class="settings-item-description">Toggle dark theme</p>
               </div>
-              <button
-                @click="handleDarkModeToggle"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-                :class="profileStore.preferences.darkMode ? 'bg-purple-600' : 'bg-gray-700'"
-              >
-                <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                  :class="profileStore.preferences.darkMode ? 'translate-x-6' : 'translate-x-1'"
-                />
-              </button>
             </div>
+            <button
+              @click="handleDarkModeToggle"
+              class="toggle-switch"
+              :class="{ 'active': profileStore.preferences.darkMode }"
+            >
+              <span class="toggle-knob"></span>
+            </button>
           </div>
 
           <!-- Other Settings -->
           <div
             v-for="(item, index) in settingsItems"
             :key="index"
-            class="p-4 flex items-center justify-between hover:bg-gray-700 cursor-pointer transition-colors border-b border-gray-700 last:border-b-0"
+            class="settings-item"
           >
-            <div class="flex items-center space-x-3">
-              <component :is="item.icon" class="w-5 h-5 text-gray-300" />
-              <div>
-                <h3 class="font-medium">{{ item.title }}</h3>
-                <p class="text-sm text-gray-400">{{ item.description }}</p>
+            <div class="settings-item-content">
+              <component :is="item.icon" class="icon-small text-subtle" />
+              <div class="settings-item-text">
+                <h3 class="settings-item-title">{{ item.title }}</h3>
+                <p class="settings-item-description">{{ item.description }}</p>
               </div>
             </div>
             <button
               v-if="item.hasToggle"
               @click="handleToggleSetting(item.preferenceKey)"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-              :class="profileStore.preferences[item.preferenceKey] ? 'bg-purple-600' : 'bg-gray-700'"
+              class="toggle-switch"
+              :class="{ 'active': profileStore.preferences[item.preferenceKey] }"
             >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                :class="profileStore.preferences[item.preferenceKey] ? 'translate-x-6' : 'translate-x-1'"
-              />
+              <span class="toggle-knob"></span>
             </button>
           </div>
         </div>
@@ -270,48 +253,359 @@ onMounted(() => {
         <button 
           @click="handleLogout"
           :disabled="isLoggingOut"
-          class="w-full flex items-center justify-center space-x-2 bg-gray-800 text-red-500 py-4 rounded-lg hover:bg-red-900/20 transition-colors disabled:opacity-50"
+          class="logout-button"
         >
-          <LogOut class="w-5 h-5" :class="{ 'animate-spin': isLoggingOut }" />
+          <LogOut class="icon-small" :class="{ 'spinning': isLoggingOut }" />
           <span>Log Out</span>
         </button>
       </div>
     </div>
 
     <!-- Safe area bottom -->
-    <div class="safe-area-bottom" />
+    <div class="safe-area-bottom"></div>
   </div>
 </template>
 
 <style scoped>
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: theme('colors.gray.700') transparent;
+/* Variables par plateforme */
+.ios {
+  --background-color: #000000;
+  --card-background: #1C1C1E;
+  --input-background: #2C2C2E;
+  --border-color: #38383A;
+  --primary-color: #0A84FF;
+  --primary-hover: #0066CC;
+  --text-color: #FFFFFF;
+  --text-secondary: #98989F;
+  --danger-color: #FF453A;
+  --border-radius: 12px;
+  --toggle-width: 44px;
+  --toggle-height: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.custom-scrollbar::-webkit-scrollbar {
+.android {
+  --background-color: #121212;
+  --card-background: #1E1E1E;
+  --input-background: #2C2C2C;
+  --border-color: #2C2C2C;
+  --primary-color: #3DDC84;
+  --primary-hover: #2ea864;
+  --text-color: #FFFFFF;
+  --text-secondary: #9E9E9E;
+  --danger-color: #CF6679;
+  --border-radius: 8px;
+  --toggle-width: 44px;
+  --toggle-height: 24px;
+  font-family: Roboto, sans-serif;
+}
+
+.web {
+  --background-color: #111827;
+  --card-background: #1F2937;
+  --input-background: #374151;
+  --border-color: #4B5563;
+  --primary-color: #8B5CF6;
+  --primary-hover: #7C3AED;
+  --text-color: #FFFFFF;
+  --text-secondary: #9CA3AF;
+  --danger-color: #EF4444;
+  --border-radius: 8px;
+  --toggle-width: 44px;
+  --toggle-height: 24px;
+  font-family: system-ui, sans-serif;
+}
+
+/* Layout de base */
+.settings-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.settings-container {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Cartes */
+.profile-card,
+.settings-card {
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+}
+
+/* En-tête de profil */
+.profile-header {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.back-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.5rem;
+  border-radius: 50%;
+  background: transparent;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: var(--input-background);
+}
+
+.title {
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Photo de profil */
+.photo-container {
+  position: relative;
+  width: 8rem;
+  height: 8rem;
+  margin: 0 auto;
+}
+
+.profile-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--primary-color);
+}
+
+.photo-upload-button {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding: 0.5rem;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.photo-upload-button:hover {
+  transform: scale(1.1);
+}
+
+.photo-upload-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Formulaire */
+.edit-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--input-background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  color: var(--text-color);
+  font-size: 16px;
+}
+
+/* Boutons */
+.button-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.primary-button,
+.secondary-button {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.primary-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.primary-button:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+
+.secondary-button {
+  background-color: var(--input-background);
+  color: var(--text-color);
+}
+
+.secondary-button:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+/* Items de paramètres */
+.settings-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-item:last-child {
+  border-bottom: none;
+}
+
+.settings-item-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.settings-item-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-item-title {
+  font-weight: 500;
+}
+
+.settings-item-description {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  width: var(--toggle-width);
+  height: var(--toggle-height);
+  border-radius: var(--toggle-height);
+  background-color: var(--input-background);
+  transition: background-color 0.2s;
+}
+
+.toggle-switch.active {
+  background-color: var(--primary-color);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(var(--toggle-height) - 4px);
+  height: calc(var(--toggle-height) - 4px);
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggle-switch.active .toggle-knob {
+  transform: translateX(calc(var(--toggle-width) - var(--toggle-height)));
+}
+
+/* Bouton de déconnexion */
+.logout-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: var(--card-background);
+  color: var(--danger-color);
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--danger-color) 10%, transparent);
+}
+
+.logout-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Icônes */
+.icon-small {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.icon-mini {
+  width: 1rem;
+  height: 1rem;
+}
+
+.text-subtle {
+  color: var(--text-secondary);
+}
+
+/* Animations */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Safe Areas */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+  background-color: var(--background-color);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: var(--background-color);
+}
+
+/* Optimisations mobiles */
+@supports (-webkit-touch-callout: none) {
+  input, button {
+    font-size: 16px !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Scrollbar personnalisée */
+.settings-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.settings-content::-webkit-scrollbar {
   width: 4px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
+.settings-content::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: theme('colors.gray.700');
+.settings-content::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
   border-radius: 2px;
-}
-
-/* Touch optimizations */
-button {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* iOS input optimization */
-@supports (-webkit-touch-callout: none) {
-  input {
-    font-size: 16px !important;
-  }
 }
 </style>
