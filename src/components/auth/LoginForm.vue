@@ -1,6 +1,9 @@
 <script setup>
 import { ref, defineEmits } from 'vue'
-import BaseInput from '../ui/BaseInput.vue'
+import { useAuthStore } from '@/stores/useAuthStore'
+
+
+const authStore = useAuthStore()
 
 const props = defineProps({
   loading: {
@@ -21,7 +24,7 @@ const password = ref('')
 
 const handleSubmit = () => {
   emit('submit', {
-    email: email.value.toLowerCase(), // Force lowercase pour l'email
+    email: email.value.toLowerCase(),
     password: password.value,
     isRegistering: isRegistering.value
   })
@@ -35,21 +38,21 @@ const toggleMode = () => {
 </script>
 
 <template>
-  <div class="w-full max-w-sm p-4 space-y-6">
+  <div class="login-container" :class="authStore.platform">
     <!-- En-tête -->
-    <div class="text-center">
-      <h2 class="text-2xl font-bold text-white">
+    <div class="header">
+      <h2 class="title">
         {{ isRegistering ? 'Create Account' : 'Welcome Back' }}
       </h2>
-      <p class="mt-2 text-gray-400">
+      <p class="subtitle">
         {{ isRegistering ? 'Sign up to get started' : 'Sign in to continue' }}
       </p>
     </div>
 
     <!-- Formulaire -->
-    <form @submit.prevent="handleSubmit" class="space-y-4">
-      <div class="space-y-2">
-        <label for="email" class="block text-sm font-medium text-gray-400">Email</label>
+    <form @submit.prevent="handleSubmit" class="form">
+      <div class="form-group">
+        <label for="email" class="label">Email</label>
         <input
           id="email"
           v-model="email"
@@ -59,13 +62,13 @@ const toggleMode = () => {
           autocapitalize="none"
           required
           :disabled="loading"
-          class="w-full bg-gray-800 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          class="input"
           placeholder="your@email.com"
         />
       </div>
 
-      <div class="space-y-2">
-        <label for="password" class="block text-sm font-medium text-gray-400">Password</label>
+      <div class="form-group">
+        <label for="password" class="label">Password</label>
         <input
           id="password"
           v-model="password"
@@ -73,36 +76,34 @@ const toggleMode = () => {
           autocomplete="current-password"
           required
           :disabled="loading"
-          class="w-full bg-gray-800 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          class="input"
           placeholder="••••••••"
         />
       </div>
 
-      <div v-if="error" class="text-sm text-red-500 text-center">
+      <div v-if="error" class="error-message">
         {{ error }}
       </div>
 
       <button
         type="submit"
         :disabled="loading"
-        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="submit-button"
       >
-        <template v-if="loading">
-          <span class="inline-block w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-        </template>
-        <template v-else>
+        <span v-if="loading" class="loading-spinner"></span>
+        <span v-else>
           {{ isRegistering ? 'Create Account' : 'Sign In' }}
-        </template>
+        </span>
       </button>
     </form>
 
     <!-- Toggle Mode -->
-    <div class="text-center">
+    <div class="toggle-container">
       <button
         type="button"
         @click="toggleMode"
         :disabled="loading"
-        class="text-purple-400 hover:text-purple-300 text-sm disabled:opacity-50 py-2 px-4"
+        class="toggle-button"
       >
         {{ isRegistering ? 'Already have an account? Sign in' : 'New here? Create account' }}
       </button>
@@ -111,16 +112,185 @@ const toggleMode = () => {
 </template>
 
 <style scoped>
-/* Prevent iOS zoom on input focus */
+/* Variables par plateforme */
+.ios {
+  --primary-color: #007AFF;
+  --primary-hover: #0051a8;
+  --input-bg: #1C1C1E;
+  --label-color: #8E8E93;
+  --error-color: #FF453A;
+  --text-color: #FFFFFF;
+  --border-radius: 10px;
+}
+
+.android {
+  --primary-color: #3DDC84;
+  --primary-hover: #2ea864;
+  --input-bg: #2C2C2C;
+  --label-color: #9E9E9E;
+  --error-color: #CF6679;
+  --text-color: #FFFFFF;
+  --border-radius: 8px;
+}
+
+.web {
+  --primary-color: #8B5CF6;
+  --primary-hover: #6D28D9;
+  --input-bg: #374151;
+  --label-color: #9CA3AF;
+  --error-color: #EF4444;
+  --text-color: #FFFFFF;
+  --border-radius: 8px;
+}
+
+/* Conteneur principal */
+.login-container {
+  width: 100%;
+  max-width: 24rem;
+  padding: 1rem;
+  margin: 0 auto;
+}
+
+/* En-tête */
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--label-color);
+  font-size: 0.875rem;
+}
+
+/* Formulaire */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  color: var(--label-color);
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 16px; /* Empêche le zoom sur iOS */
+}
+
+.input:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Message d'erreur */
+.error-message {
+  color: var(--error-color);
+  font-size: 0.875rem;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* Bouton de soumission */
+.submit-button {
+  width: 100%;
+  padding: 0.875rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Spinner de chargement */
+.loading-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Toggle button */
+.toggle-container {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.toggle-button {
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.toggle-button:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.toggle-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Optimisations mobiles */
 @supports (-webkit-touch-callout: none) {
-  input {
-    font-size: 16px !important;
+  .input, button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
-/* Augmenter la zone de tap pour les boutons sur mobile */
-button {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+/* Safe areas iOS */
+.ios .login-container {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 </style>
