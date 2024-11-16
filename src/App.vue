@@ -1,21 +1,18 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from './stores/useAuthStore'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const appReady = ref(false)
 
-// Simulate a user for testing
-const currentUser = {
-  uid: 'test123',
-  email: 'test@student.42.fr',
-  avatar: '/api/placeholder/32/32'
-}
-
 onMounted(async () => {
-  // For testing, we'll automatically go to chat view
   try {
-    await router.replace('/chat')
+    await authStore.checkAuthState()
+    if (authStore.user) {
+      await router.replace('/chat')
+    }
     setTimeout(() => {
       appReady.value = true
     }, 100)
@@ -40,10 +37,9 @@ onMounted(async () => {
     <router-view 
       v-else 
       v-slot="{ Component }"
-      :current-user="currentUser"
     >
       <transition name="page-transition" mode="out-in">
-        <component :is="Component" :current-user="currentUser" />
+        <component :is="Component" />
       </transition>
     </router-view>
   </div>

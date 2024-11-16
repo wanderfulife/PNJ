@@ -1,29 +1,20 @@
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import LoginForm from '../components/auth/LoginForm.vue'
-import { useAuth } from '../composables/useAuth'
+import { useAuthStore } from '../stores/useAuthStore'
 
 const router = useRouter()
-const { login, register } = useAuth()
-const loading = ref(false)
-const error = ref('')
+const authStore = useAuthStore()
 
 const handleSubmit = async ({ email, password, isRegistering }) => {
   try {
-    loading.value = true
-    error.value = ''
-    
-    const action = isRegistering ? register : login
+    const action = isRegistering ? authStore.register : authStore.login
     await action(email, password)
     
-    // Rediriger vers /chat après une connexion réussie
     await router.replace('/chat')
   } catch (err) {
     console.error('Auth error:', err)
-    error.value = err.message || 'An error occurred'
-  } finally {
-    loading.value = false
   }
 }
 </script>
@@ -36,8 +27,8 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
     <!-- Main Content -->
     <main class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <LoginForm
-        :loading="loading"
-        :error="error"
+        :loading="authStore.loading"
+        :error="authStore.error"
         @submit="handleSubmit"
       />
     </main>

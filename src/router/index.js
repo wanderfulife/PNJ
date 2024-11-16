@@ -1,6 +1,6 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
-import { auth } from '../firebase/config'
+import { useAuthStore } from '../stores/useAuthStore'
 
 // Route components
 const LoginView = () => import('../views/LoginView.vue')
@@ -52,7 +52,6 @@ const router = createRouter({
   routes
 })
 
-// Navigation guard
 router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest)
@@ -60,22 +59,20 @@ router.beforeEach(async (to, from, next) => {
   // Set page title
   document.title = to.meta.title ? `PNJ - ${to.meta.title}` : 'PNJ'
   
-  // Wait for Firebase to initialize
-  const user = await new Promise((resolve) => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      unsubscribe()
-      resolve(user)
-    })
-  })
+  const authStore = useAuthStore()
   
-  // Handle navigation based on auth state
-  if (requiresAuth && !user) {
+  // Si l'état d'authentification n'est pas encore initialisé, attendez
+  if (!authStore.isInitialized) {
+    await authStore.checkAuthState()
+  }
+  
+  if (requiresAuth && !authStore.user) {
     next({ 
       path: '/login',
       query: { redirect: to.fullPath }
     })
   }
-  else if (requiresGuest && user) {
+  else if (requiresGuest && authStore.user) {
     next('/chat')
   }
   else {

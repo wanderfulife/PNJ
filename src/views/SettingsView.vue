@@ -1,22 +1,13 @@
-# src/views/SettingsView.vue
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuth } from '../composables/useAuth'
-import { useProfile } from '../composables/useProfile'
+import { useAuthStore } from '../stores/useAuthStore'
+import { useProfileStore } from '../stores/useProfileStore'
 import { Moon, Bell, Shield, Key, HelpCircle, LogOut, ChevronLeft, Camera, Edit2 } from 'lucide-vue-next'
 
 const router = useRouter()
-const { logout } = useAuth()
-const { 
-  profile,
-  loading: profileLoading,
-  error: profileError,
-  updateUserProfile,
-  updateUserEmail,
-  saveUserPreferences,
-  initializeProfile
-} = useProfile()
+const authStore = useAuthStore()
+const profileStore = useProfileStore()
 
 const showProfileEdit = ref(false)
 const isLoggingOut = ref(false)
@@ -64,7 +55,7 @@ const handleLogout = async () => {
   if (isLoggingOut.value) return
   try {
     isLoggingOut.value = true
-    await logout()
+    await authStore.logout()
     await router.push('/login')
   } catch (error) {
     console.error('Logout error:', error)
@@ -75,19 +66,19 @@ const handleLogout = async () => {
 
 const startProfileEdit = () => {
   editForm.value = {
-    displayName: profile.value.displayName,
-    email: profile.value.email
+    displayName: authStore.user?.displayName || '',
+    email: authStore.user?.email || ''
   }
   showProfileEdit.value = true
 }
 
 const handleProfileUpdate = async () => {
-  if (editForm.value.email !== profile.value.email) {
-    await updateUserEmail(editForm.value.email)
+  if (editForm.value.email !== authStore.user?.email) {
+    await authStore.updateUserEmail(editForm.value.email)
   }
   
-  if (editForm.value.displayName !== profile.value.displayName) {
-    await updateUserProfile({
+  if (editForm.value.displayName !== authStore.user?.displayName) {
+    await authStore.updateUserProfile({
       displayName: editForm.value.displayName
     })
   }
@@ -101,11 +92,10 @@ const handlePhotoUpload = async (event) => {
   
   try {
     isUploadingPhoto.value = true
-    // Ici nous simulerons juste un délai pour l'exemple
-    // En réalité, vous implémenteriez l'upload vers Firebase Storage
+    // Simulation d'un délai réseau
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    await updateUserProfile({
+    await authStore.updateUserProfile({
       photoURL: '/api/placeholder/128/128' // URL simulée
     })
   } catch (error) {
@@ -117,21 +107,19 @@ const handlePhotoUpload = async (event) => {
 
 const handleToggleSetting = async (preferenceKey) => {
   if (!preferenceKey) return
-  
-  const newValue = !profile.value.preferences[preferenceKey]
-  await saveUserPreferences({
-    [preferenceKey]: newValue
+  await profileStore.savePreferences({
+    [preferenceKey]: !profileStore.preferences[preferenceKey]
   })
 }
 
 const handleDarkModeToggle = async () => {
-  await saveUserPreferences({
-    darkMode: !profile.value.preferences.darkMode
+  await profileStore.savePreferences({
+    darkMode: !profileStore.preferences.darkMode
   })
 }
 
 onMounted(() => {
-  initializeProfile()
+  profileStore.loadPreferences()
 })
 </script>
 
@@ -158,8 +146,8 @@ onMounted(() => {
             <!-- Photo Profile -->
             <div class="relative group">
               <img
-                :src="profile.photoURL"
-                :alt="profile.displayName"
+                :src="authStore.user?.photoURL"
+                :alt="authStore.user?.displayName"
                 class="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-purple-900"
               />
               <label 
@@ -194,10 +182,10 @@ onMounted(() => {
               <div class="flex space-x-2">
                 <button 
                   @click="handleProfileUpdate"
-                  :disabled="profileLoading"
+                  :disabled="authStore.loading"
                   class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  {{ profileLoading ? 'Saving...' : 'Save' }}
+                  {{ authStore.loading ? 'Saving...' : 'Save' }}
                 </button>
                 <button 
                   @click="showProfileEdit = false"
@@ -206,15 +194,15 @@ onMounted(() => {
                   Cancel
                 </button>
               </div>
-              <p v-if="profileError" class="text-red-500 text-sm text-center">
-                {{ profileError }}
+              <p v-if="authStore.error" class="text-red-500 text-sm text-center">
+                {{ authStore.error }}
               </p>
             </div>
 
             <!-- Profile Display -->
             <div v-else class="text-center">
-              <h2 class="text-xl font-semibold">{{ profile.displayName }}</h2>
-              <p class="text-gray-400">{{ profile.email }}</p>
+              <h2 class="text-xl font-semibold">{{ authStore.user?.displayName }}</h2>
+              <p class="text-gray-400">{{ authStore.user?.email }}</p>
               <button 
                 @click="startProfileEdit"
                 class="mt-4 inline-flex items-center space-x-2 text-purple-400 hover:text-purple-300"
@@ -241,11 +229,11 @@ onMounted(() => {
               <button
                 @click="handleDarkModeToggle"
                 class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-                :class="profile.preferences.darkMode ? 'bg-purple-600' : 'bg-gray-700'"
+                :class="profileStore.preferences.darkMode ? 'bg-purple-600' : 'bg-gray-700'"
               >
                 <span
                   class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                  :class="profile.preferences.darkMode ? 'translate-x-6' : 'translate-x-1'"
+                  :class="profileStore.preferences.darkMode ? 'translate-x-6' : 'translate-x-1'"
                 />
               </button>
             </div>
@@ -268,11 +256,11 @@ onMounted(() => {
               v-if="item.hasToggle"
               @click="handleToggleSetting(item.preferenceKey)"
               class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-              :class="profile.preferences[item.preferenceKey] ? 'bg-purple-600' : 'bg-gray-700'"
+              :class="profileStore.preferences[item.preferenceKey] ? 'bg-purple-600' : 'bg-gray-700'"
             >
               <span
                 class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-                :class="profile.preferences[item.preferenceKey] ? 'translate-x-6' : 'translate-x-1'"
+                :class="profileStore.preferences[item.preferenceKey] ? 'translate-x-6' : 'translate-x-1'"
               />
             </button>
           </div>
