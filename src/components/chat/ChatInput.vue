@@ -1,4 +1,3 @@
-# ChatInput.vue
 <script setup>
 import { ref, computed } from 'vue'
 import { Paperclip, Image, Smile, Mic } from 'lucide-vue-next'
@@ -31,14 +30,18 @@ const handleKeydown = (e) => {
     <div class="chat-input-container">
       <!-- Action buttons group -->
       <div class="actions-group">
-        <!-- Clip button -->
-        <button class="action-btn btn-clip">
-          <Paperclip class="icon" />
+        <button 
+          class="action-btn" 
+          aria-label="Attach file"
+        >
+          <Paperclip class="icon" aria-hidden="true" />
         </button>
 
-        <!-- Gallery button -->
-        <button class="action-btn btn-gallery">
-          <Image class="icon" />
+        <button 
+          class="action-btn" 
+          aria-label="Send photo"
+        >
+          <Image class="icon" aria-hidden="true" />
         </button>
       </div>
 
@@ -55,14 +58,19 @@ const handleKeydown = (e) => {
 
       <!-- Right actions group -->
       <div class="actions-group">
-        <!-- Emoji button -->
-        <button class="action-btn btn-emoji">
-          <Smile class="icon" />
+        <button 
+          class="action-btn" 
+          aria-label="Choose emoji"
+        >
+          <Smile class="icon" aria-hidden="true" />
         </button>
 
-        <!-- Voice message button -->
-        <button class="action-btn btn-voice">
-          <Mic class="icon" />
+        <button 
+          class="action-btn"
+          :class="{ 'recording': isRecording }"
+          aria-label="Record voice message"
+        >
+          <Mic class="icon" aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -71,59 +79,42 @@ const handleKeydown = (e) => {
 
 <style scoped>
 .chat-input-wrapper {
-  position: relative;
-  width: 100%;
-  background-color: #0f1117;
-  margin-top: -1px; /* Supprime l'espace blanc */
-  padding: 12px 6px;
-}
-
-.chat-input-wrapper::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(75, 85, 99, 0.2) 15%,
-    rgba(75, 85, 99, 0.2) 85%,
-    transparent
-  );
+  background-color: #111827;
+  border-top: 1px solid rgba(75, 85, 99, 0.2);
+  padding: 0.75rem 0.375rem;
 }
 
 .chat-input-container {
   display: flex;
   align-items: center;
-  gap: 4px;
-  max-width: 900px;
+  gap: 0.25rem;
+  max-width: 56rem;
   margin: 0 auto;
-  padding: 0 4px;
+  padding: 0 0.25rem;
 }
 
 .actions-group {
   display: flex;
-  gap: 2px;
+  gap: 0.125rem;
 }
 
 .action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 2.375rem;
+  height: 2.375rem;
   border-radius: 50%;
-  color: rgba(156, 163, 175, 0.8);
+  color: #9CA3AF;
   transition: all 0.15s ease;
   background: transparent;
+  border: none;
   position: relative;
 }
 
 .action-btn:hover {
   background-color: rgba(75, 85, 99, 0.2);
-  color: rgba(156, 163, 175, 1);
+  color: #D1D5DB;
 }
 
 .action-btn:active {
@@ -133,25 +124,25 @@ const handleKeydown = (e) => {
 .input-field-wrapper {
   flex: 1;
   position: relative;
-  height: 38px;
+  height: 2.375rem;
   min-width: 0;
-  margin: 0 4px;
+  margin: 0 0.25rem;
 }
 
 .message-input {
   width: 100%;
   height: 100%;
-  padding: 8px 16px;
+  padding: 0.5rem 1rem;
   background-color: rgba(31, 41, 55, 0.4);
   border: none;
-  border-radius: 19px;
+  border-radius: 1.25rem;
   color: white;
-  font-size: 15px;
+  font-size: 0.9375rem;
   transition: background-color 0.2s ease;
 }
 
 .message-input::placeholder {
-  color: rgb(156, 163, 175);
+  color: #9CA3AF;
 }
 
 .message-input:focus {
@@ -160,8 +151,8 @@ const handleKeydown = (e) => {
 }
 
 .icon {
-  width: 21px;
-  height: 21px;
+  width: 1.3125rem;
+  height: 1.3125rem;
   opacity: 0.9;
   transition: transform 0.2s ease;
 }
@@ -170,18 +161,21 @@ const handleKeydown = (e) => {
   transform: scale(1.1);
 }
 
-/* Style particulier pour les boutons */
-.btn-clip:hover { color: #60A5FA; }
-.btn-gallery:hover { color: #34D399; }
-.btn-emoji:hover { color: #FCD34D; }
-.btn-voice:hover { color: #F87171; }
+/* Style spécifique aux actions */
+.action-btn:nth-child(1):hover { color: #60A5FA; } /* Attach */
+.action-btn:nth-child(2):hover { color: #34D399; } /* Image */
+.action-btn:first-of-type:hover { color: #FCD34D; } /* Emoji */
+.action-btn:last-of-type:hover { color: #F87171; } /* Voice */
 
-/* Platform specific adjustments */
+/* Platform specific styles */
 .ios {
-  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
 }
 
-/* Ripple effect for Android */
+.ios .message-input {
+  font-size: 1rem;
+}
+
 .android .action-btn {
   overflow: hidden;
 }
@@ -200,14 +194,26 @@ const handleKeydown = (e) => {
   opacity: 0.1;
 }
 
-/* Touch optimization */
+/* Recording state */
+.recording {
+  color: #EF4444;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Touch optimizations */
 @media (hover: none) {
   .action-btn {
     -webkit-tap-highlight-color: transparent;
   }
   
   .message-input {
-    font-size: 16px; /* Prevent zoom on iOS */
+    font-size: 1rem; /* Prevent zoom on iOS */
   }
 }
 

@@ -17,8 +17,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['back'])
-
-// Platform class computation
 const platformClass = computed(() => authStore.platform?.toLowerCase())
 
 const handleBack = () => {
@@ -32,19 +30,22 @@ const handleBack = () => {
       v-if="showBackButton"
       class="back-button"
       @click="handleBack"
+      aria-label="Go back"
     >
-      <ChevronLeft class="back-icon" />
+      <ChevronLeft class="back-icon" aria-hidden="true" />
     </button>
 
     <div class="user-container">
       <div class="avatar-container">
         <img
           :src="chat.avatar"
+          :alt="`${chat.name}'s avatar`"
           class="avatar"
         />
         <div 
           v-if="chat.online" 
           class="online-indicator"
+          aria-hidden="true"
         />
       </div>
       
@@ -56,8 +57,11 @@ const handleBack = () => {
       </div>
     </div>
 
-    <button class="menu-button">
-      <MoreVertical class="menu-icon" />
+    <button 
+      class="menu-button"
+      aria-label="More options"
+    >
+      <MoreVertical class="menu-icon" aria-hidden="true" />
     </button>
   </div>
 </template>
@@ -68,8 +72,8 @@ const handleBack = () => {
   align-items: center;
   height: 3.5rem;
   padding: 0 var(--spacing-4);
-  background-color: var(--background);
-  border-bottom: 1px solid var(--gray-800);
+  background-color: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .back-button {
@@ -78,13 +82,13 @@ const handleBack = () => {
   border-radius: var(--radius-full);
   border: none;
   background: transparent;
-  color: var(--foreground);
+  color: var(--color-text);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .back-button:hover {
-  background-color: var(--gray-800);
+  background-color: var(--color-surface);
 }
 
 .back-icon {
@@ -118,9 +122,9 @@ const handleBack = () => {
   right: 0;
   width: 0.5rem;
   height: 0.5rem;
-  background-color: var(--success);
+  background-color: var(--color-success);
   border-radius: var(--radius-full);
-  border: 2px solid var(--background);
+  border: 2px solid var(--color-background);
 }
 
 .user-info {
@@ -129,17 +133,17 @@ const handleBack = () => {
 }
 
 .user-name {
-  font-size: var(--text-base);
+  font-size: var(--font-size-base);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--foreground);
+  color: var(--color-text);
 }
 
 .user-status {
-  font-size: var(--text-sm);
-  color: var(--gray-400);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
 .menu-button {
@@ -147,13 +151,13 @@ const handleBack = () => {
   border-radius: var(--radius-full);
   border: none;
   background: transparent;
-  color: var(--foreground);
+  color: var(--color-text);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .menu-button:hover {
-  background-color: var(--gray-800);
+  background-color: var(--color-surface);
 }
 
 .menu-icon {
@@ -162,9 +166,9 @@ const handleBack = () => {
 }
 
 /* Platform specific styles */
-.ios .chat-header {
-  padding-top: env(safe-area-inset-top);
-  height: calc(3.5rem + env(safe-area-inset-top));
+.ios {
+  padding-top: var(--safe-area-inset-top);
+  height: calc(3.5rem + var(--safe-area-inset-top));
 }
 
 .android .back-button,
@@ -180,7 +184,7 @@ const handleBack = () => {
   inset: 0;
   background-color: currentColor;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-fast);
 }
 
 .android .back-button:active::after,
@@ -189,17 +193,18 @@ const handleBack = () => {
 }
 
 /* Touch optimizations */
-.back-button,
-.menu-button {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+@media (hover: none) {
+  .back-button,
+  .menu-button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
-/* Web platform hover effects */
-@media (hover: hover) {
-  .web .back-button:hover,
-  .web .menu-button:hover {
-    background-color: var(--gray-800);
-  }
+/* Animation subtiles */
+.back-button:active,
+.menu-button:active {
+  transform: scale(0.95);
+  transition: transform var(--transition-fast);
 }
 </style>

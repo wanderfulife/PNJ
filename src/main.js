@@ -3,7 +3,6 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { initializeFirebase } from './firebase/config'
-import './style.css'
 
 // Create application
 const app = createApp(App)

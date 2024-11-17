@@ -4,8 +4,8 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [vue()],
   server: {
-    host: '0.0.0.0',  // Enable connections from all IPs
-    port: 5173,       // Explicitly set port
+    host: '0.0.0.0',
+    port: 5173,
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp'
@@ -18,7 +18,9 @@ export default defineConfig({
       output: {
         format: 'es'
       }
-    }
+    },
+    cssCodeSplit: true,
+    cssMinify: true
   },
   optimizeDeps: {
     esbuildOptions: {
@@ -40,6 +42,14 @@ export default defineConfig({
     }
   },
   css: {
-    devSourcemap: true
+    devSourcemap: true,
+    modules: {
+      scopeBehaviour: 'local'
+    },
+    preprocessorOptions: {
+      css: {
+        charset: false
+      }
+    }
   }
 })

@@ -1,10 +1,12 @@
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import LoginForm from '@/components/auth/LoginForm.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const platformClass = computed(() => authStore.platform?.toLowerCase())
 
 const handleSubmit = async ({ email, password, isRegistering }) => {
   try {
@@ -21,12 +23,15 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
 </script>
 
 <template>
-  <div class="login-view">
-    <!-- Safe Area Top -->
-    <div class="safe-area-top"></div>
+  <div :class="['login-view', platformClass]">
+    <div class="safe-area-top" />
 
-    <!-- Main Content -->
     <main class="login-content">
+      <div class="brand">
+        <h1 class="brand-title">Welcome</h1>
+        <p class="brand-subtitle">Connect and chat seamlessly</p>
+      </div>
+
       <LoginForm
         :loading="authStore.loading"
         :error="authStore.error"
@@ -34,43 +39,105 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
       />
     </main>
 
-    <!-- Safe Area Bottom -->
-    <div class="safe-area-bottom"></div>
+    <div class="safe-area-bottom" />
   </div>
 </template>
 
 <style scoped>
 .login-view {
   min-height: 100vh;
+  min-height: var(--app-height);
   display: flex;
   flex-direction: column;
-  background-color: var(--background);
+  background: linear-gradient(
+    to bottom,
+    var(--color-background),
+    var(--color-surface-light)
+  );
+}
+
+.safe-area-top {
+  height: var(--safe-area-inset-top);
+  background-color: var(--color-background);
+}
+
+.safe-area-bottom {
+  height: var(--safe-area-inset-bottom);
+  background-color: var(--color-surface-light);
 }
 
 .login-content {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--spacing-4);
+  padding: var(--spacing-4);
+  gap: var(--spacing-8);
 }
 
+.brand {
+  text-align: center;
+  animation: fadeIn var(--transition-base);
+}
+
+.brand-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--spacing-2);
+}
+
+.brand-subtitle {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+}
+
+/* Platform specific styles */
+.ios {
+  font-family: var(--platform-font);
+}
+
+.ios .brand-title {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.android {
+  font-family: var(--platform-font);
+}
+
+.android .brand-title {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Responsive adjustments */
 @media (min-width: 640px) {
   .login-content {
-    padding: 0 var(--spacing-6);
+    padding: var(--spacing-8);
+    max-width: 28rem;
+    margin: 0 auto;
+    width: 100%;
   }
 }
 
-@media (min-width: 1024px) {
-  .login-content {
-    padding: 0 var(--spacing-8);
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Fix for mobile viewport height */
+/* Fix for iOS height */
 @supports (-webkit-touch-callout: none) {
   .login-view {
-    min-height: var(--app-height);
+    min-height: -webkit-fill-available;
   }
 }
 </style>

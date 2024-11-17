@@ -1,85 +1,78 @@
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { Phone, Video } from 'lucide-vue-next'
-import ChatHeader from './ChatHeader.vue'
-import ChatInput from './ChatInput.vue'
-import BaseMessage from '../ui/BaseMessage.vue'
-import { useAuthStore } from '@/stores/useAuthStore'
-import { storeToRefs } from 'pinia'
+import { ref, computed, onMounted, watch, nextTick } from "vue";
+import ChatHeader from "./ChatHeader.vue";
+import ChatInput from "./ChatInput.vue";
+import BaseMessage from "../ui/BaseMessage.vue";
+import { useAuthStore } from "@/stores/useAuthStore";
 
-const authStore = useAuthStore()
+const authStore = useAuthStore();
+const platformClass = computed(() => authStore.platform?.toLowerCase());
 
 const props = defineProps({
   chat: {
     type: Object,
-    required: true
+    required: true,
   },
   currentUserId: {
     type: String,
-    required: true
+    required: true,
   },
   isTyping: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-const emit = defineEmits(['back', 'send'])
+const emit = defineEmits(["back", "send"]);
+const messagesContainer = ref(null);
+const messages = ref(props.chat?.messages || []);
 
-// Refs
-const messagesContainer = ref(null)
-const messages = ref(props.chat?.messages || [])
-
-// Platform class computation
-const platformClass = computed(() => authStore.platform?.toLowerCase())
-
-// Methods
 const scrollToBottom = async (smooth = true) => {
-  await nextTick()
+  await nextTick();
   if (messagesContainer.value) {
     messagesContainer.value.scrollTo({
       top: messagesContainer.value.scrollHeight,
-      behavior: smooth ? 'smooth' : 'auto'
-    })
+      behavior: smooth ? "smooth" : "auto",
+    });
   }
-}
+};
 
-// Watchers
-watch(() => props.chat?.messages, (newMessages) => {
-  if (newMessages) {
-    messages.value = newMessages
-    scrollToBottom()
-  }
-}, { deep: true })
+watch(
+  () => props.chat?.messages,
+  (newMessages) => {
+    if (newMessages) {
+      messages.value = newMessages;
+      scrollToBottom();
+    }
+  },
+  { deep: true }
+);
 
-// Lifecycle
 onMounted(() => {
-  scrollToBottom(false)
-})
+  scrollToBottom(false);
+});
 
 const handleSend = (message) => {
-  emit('send', message)
-}
+  emit("send", message);
+};
 
 const handleBack = () => {
-  emit('back')
-}
+  emit("back");
+};
 </script>
 
 <template>
   <div v-if="chat" :class="['chat-area', platformClass]">
-    <ChatHeader
-      :chat="chat"
-      :show-back-button="true"
-      @back="handleBack"
-    />
-    
-    <!-- Messages Container -->
-    <div
-      ref="messagesContainer"
-      class="messages-container"
-    >
-      <div class="messages-wrapper">
+    <ChatHeader :chat="chat" :show-back-button="true" @back="handleBack" />
+
+    <div ref="messagesContainer" class="messages-container">
+      <!-- Empty State -->
+      <div v-if="!messages.length" class="empty-state">
+        <p>No messages yet. Start the conversation!</p>
+      </div>
+
+      <!-- Messages -->
+      <div v-else class="messages-wrapper">
         <BaseMessage
           v-for="message in messages"
           :key="message.id"
@@ -88,23 +81,20 @@ const handleBack = () => {
           :is-outgoing="message.sender === currentUserId"
           :status="message.status"
         />
-        
+
         <!-- Typing Indicator -->
-        <div v-if="isTyping" class="typing-indicator">
+        <div v-if="isTyping" class="typing-indicator" role="status">
           <div class="typing-dots">
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
           </div>
-          <span>Typing...</span>
+          <span>{{ chat.name }} is typing...</span>
         </div>
       </div>
     </div>
 
-    <ChatInput 
-      @send="handleSend"
-      class="chat-input"
-    />
+    <ChatInput @send="handleSend" class="chat-input" />
   </div>
 </template>
 
@@ -113,18 +103,18 @@ const handleBack = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: var(--background);
-  overflow: hidden;
+  background-color: var(--color-background);
+  color: var(--color-text);
 }
 
 .messages-container {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   position: relative;
   scrollbar-width: thin;
-  scrollbar-color: var(--gray-700) transparent;
-  padding: var(--spacing-2) 0;
+  scrollbar-color: var(--color-border) transparent;
 }
 
 .messages-container::-webkit-scrollbar {
@@ -136,61 +126,166 @@ const handleBack = () => {
 }
 
 .messages-container::-webkit-scrollbar-thumb {
-  background-color: var(--gray-700);
-  border-radius: var(--radius-full);
+  background-color: var(--color-border);
+  border-radius: var(--platform-radius);
 }
 
 .messages-wrapper {
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  padding-bottom: var(--spacing-4);
+  padding: var(--spacing-4) 0;
+  gap: var(--spacing-2);
 }
 
+/* Empty State */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--spacing-4);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  text-align: center;
+}
+
+/* Typing Indicator */
 .typing-indicator {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
   padding: var(--spacing-2) var(--spacing-4);
-  color: var(--gray-400);
-  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  animation: slideUp var(--transition-base);
 }
 
 .typing-dots {
   display: flex;
-  gap: var(--spacing-1);
+  gap: 4px;
 }
 
 .typing-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  background-color: var(--gray-400);
-  border-radius: var(--radius-full);
-  animation: bounce 1s infinite;
+  width: 6px;
+  height: 6px;
+  background-color: var(--color-text-secondary);
+  border-radius: 50%;
+  opacity: 0.7;
 }
 
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+.typing-dot:nth-child(1) {
+  animation: bounce 1s infinite 0.1s;
+}
+.typing-dot:nth-child(2) {
+  animation: bounce 1s infinite 0.2s;
+}
+.typing-dot:nth-child(3) {
+  animation: bounce 1s infinite 0.3s;
 }
 
+/* Chat Input Section */
 .chat-input {
   flex-shrink: 0;
-  border-top: 1px solid var(--gray-800);
-  background-color: var(--background);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-background);
   position: relative;
-  z-index: 1;
+  z-index: var(--z-sticky);
 }
 
-/* Platform specific styles */
+/* Platform Specific Styles */
+.ios {
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+}
+
 .ios .messages-container {
-  padding-top: calc(var(--spacing-2) + env(safe-area-inset-top));
+  padding-top: var(--safe-area-top);
+}
+
+.ios .chat-input {
+  padding-bottom: var(--safe-area-bottom);
 }
 
 .android .messages-container {
   padding-top: var(--spacing-2);
+}
+
+/* Animations */
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Touch Optimizations */
+@media (hover: none) {
+  .chat-area {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* High Performance Rendering */
+.messages-wrapper > * {
+  will-change: transform, opacity;
+}
+
+/* Focus Management */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--platform-primary);
+  outline-offset: 2px;
+}
+
+/* Error States */
+.error-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4);
+  color: var(--color-error);
+  text-align: center;
+}
+
+/* Loading States */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4);
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--platform-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

@@ -1,7 +1,9 @@
 <script setup>
+import { computed } from 'vue'
 import { Check } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/useAuthStore'
 
-defineProps({
+const props = defineProps({
   content: {
     type: String,
     required: true
@@ -20,22 +22,27 @@ defineProps({
     validator: (value) => ['sent', 'delivered', 'read'].includes(value)
   }
 })
+
+const authStore = useAuthStore()
+const platformClass = computed(() => authStore.platform?.toLowerCase())
 </script>
 
 <template>
-  <div :class="['message-container', { 'outgoing': isOutgoing }]">
-    <div :class="['message-bubble', { 'outgoing': isOutgoing }]">
+  <div 
+    :class="[
+      'message-container',
+      { 'outgoing': isOutgoing },
+      platformClass
+    ]"
+  >
+    <div class="message-bubble">
       <p class="message-text">{{ content }}</p>
       <div class="message-footer">
         <span class="message-time">{{ timestamp }}</span>
         <Check 
           v-if="isOutgoing"
           class="message-status"
-          :class="{
-            'status-sent': status === 'sent',
-            'status-delivered': status === 'delivered',
-            'status-read': status === 'read'
-          }"
+          :class="status"
         />
       </div>
     </div>
@@ -45,37 +52,34 @@ defineProps({
 <style scoped>
 .message-container {
   display: flex;
-  max-width: 85%;
+  padding: var(--spacing-1) var(--spacing-4);
   margin: var(--spacing-1) 0;
-  padding: 0 var(--spacing-2);
+  max-width: 85%;
+  animation: slideIn var(--transition-base);
 }
 
 .message-container.outgoing {
   margin-left: auto;
-  justify-content: flex-end;
+  flex-direction: row-reverse;
 }
 
 .message-bubble {
-  position: relative;
-  background-color: var(--gray-800);
-  border-radius: var(--radius-2xl);
   padding: var(--spacing-3) var(--spacing-4);
-  border-bottom-left-radius: 0;
-  max-width: 100%;
-  word-wrap: break-word;
+  background-color: var(--color-surface);
+  border-radius: var(--platform-radius);
+  position: relative;
 }
 
-.message-bubble.outgoing {
-  background-color: var(--primary);
-  border-bottom-left-radius: var(--radius-2xl);
-  border-bottom-right-radius: 0;
+.outgoing .message-bubble {
+  background-color: var(--platform-primary);
 }
 
 .message-text {
-  color: var(--foreground);
-  font-size: var(--text-base);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
   line-height: 1.4;
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .message-footer {
@@ -84,45 +88,52 @@ defineProps({
   justify-content: flex-end;
   gap: var(--spacing-1);
   margin-top: var(--spacing-1);
+  min-height: 1.25rem;
 }
 
 .message-time {
-  font-size: var(--text-xs);
-  color: var(--gray-300);
-  margin-left: var(--spacing-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
 }
 
 .message-status {
   width: 1rem;
   height: 1rem;
-  flex-shrink: 0;
+  transition: all var(--transition-fast);
 }
 
-.message-status.status-sent {
-  color: var(--gray-400);
+.message-status.sent {
+  color: var(--color-text-secondary);
+  opacity: 0.5;
 }
 
-.message-status.status-delivered {
-  color: var(--blue-400);
+.message-status.delivered {
+  color: var(--color-text-secondary);
+  opacity: 0.8;
 }
 
-.message-status.status-read {
-  color: var(--green-400);
+.message-status.read {
+  color: var(--color-success);
 }
 
-/* Animation pour les nouveaux messages */
+/* Platform specific styles */
+.ios .message-bubble {
+  border-radius: calc(var(--platform-radius) * 1.2);
+}
+
+.android .message-bubble {
+  border-radius: calc(var(--platform-radius) * 2);
+}
+
+/* Animations */
 @keyframes slideIn {
   from {
-    transform: translateY(10px);
     opacity: 0;
+    transform: translateY(8px);
   }
   to {
-    transform: translateY(0);
     opacity: 1;
+    transform: translateY(0);
   }
-}
-
-.message-container {
-  animation: slideIn 0.2s ease-out;
 }
 </style>

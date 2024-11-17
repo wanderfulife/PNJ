@@ -1,55 +1,52 @@
 <script setup>
-import { ref, defineEmits } from 'vue'
-import { useAuthStore } from '@/stores/useAuthStore'
+import { ref } from "vue";
+import { useAuthStore } from "@/stores/useAuthStore";
 
-
-const authStore = useAuthStore()
+const authStore = useAuthStore();
 
 const props = defineProps({
   loading: {
     type: Boolean,
-    default: false
+    default: false,
   },
   error: {
     type: String,
-    default: ''
-  }
-})
+    default: "",
+  },
+});
 
-const emit = defineEmits(['submit'])
+const emit = defineEmits(["submit"]);
 
-const isRegistering = ref(false)
-const email = ref('')
-const password = ref('')
+const isRegistering = ref(false);
+const email = ref("");
+const password = ref("");
 
 const handleSubmit = () => {
-  emit('submit', {
+  emit("submit", {
     email: email.value.toLowerCase(),
     password: password.value,
-    isRegistering: isRegistering.value
-  })
-}
+    isRegistering: isRegistering.value,
+  });
+};
 
 const toggleMode = () => {
-  isRegistering.value = !isRegistering.value
-  email.value = ''
-  password.value = ''
-}
+  isRegistering.value = !isRegistering.value;
+  email.value = "";
+  password.value = "";
+};
 </script>
 
 <template>
   <div class="login-container" :class="authStore.platform">
-    <!-- En-tête -->
     <div class="header">
       <h2 class="title">
-        {{ isRegistering ? 'Create Account' : 'Welcome Back' }}
+        {{ isRegistering ? "Create Account" : "Welcome Back" }}
       </h2>
       <p class="subtitle">
-        {{ isRegistering ? 'Sign up to get started' : 'Sign in to continue' }}
+        {{ isRegistering ? "Sign up to get started" : "Sign in to continue" }}
       </p>
     </div>
 
-    <!-- Formulaire -->
     <form @submit.prevent="handleSubmit" class="form">
       <div class="form-group">
         <label for="email" class="label">Email</label>
@@ -85,19 +82,14 @@ const toggleMode = () => {
         {{ error }}
       </div>
 
-      <button
-        type="submit"
-        :disabled="loading"
-        class="submit-button"
-      >
+      <button type="submit" :disabled="loading" class="submit-button">
         <span v-if="loading" class="loading-spinner"></span>
         <span v-else>
-          {{ isRegistering ? 'Create Account' : 'Sign In' }}
+          {{ isRegistering ? "Create Account" : "Sign In" }}
         </span>
       </button>
     </form>
 
-    <!-- Toggle Mode -->
     <div class="toggle-container">
       <button
         type="button"
@@ -105,45 +97,13 @@ const toggleMode = () => {
         :disabled="loading"
         class="toggle-button"
       >
-        {{ isRegistering ? 'Already have an account? Sign in' : 'New here? Create account' }}
+        {{ isRegistering ? "Already have an account? Sign in" : "New here? Create account" }}
       </button>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Variables par plateforme */
-.ios {
-  --primary-color: #007AFF;
-  --primary-hover: #0051a8;
-  --input-bg: #1C1C1E;
-  --label-color: #8E8E93;
-  --error-color: #FF453A;
-  --text-color: #FFFFFF;
-  --border-radius: 10px;
-}
-
-.android {
-  --primary-color: #3DDC84;
-  --primary-hover: #2ea864;
-  --input-bg: #2C2C2C;
-  --label-color: #9E9E9E;
-  --error-color: #CF6679;
-  --text-color: #FFFFFF;
-  --border-radius: 8px;
-}
-
-.web {
-  --primary-color: #8B5CF6;
-  --primary-hover: #6D28D9;
-  --input-bg: #374151;
-  --label-color: #9CA3AF;
-  --error-color: #EF4444;
-  --text-color: #FFFFFF;
-  --border-radius: 8px;
-}
-
-/* Conteneur principal */
 .login-container {
   width: 100%;
   max-width: 24rem;
@@ -151,7 +111,6 @@ const toggleMode = () => {
   margin: 0 auto;
 }
 
-/* En-tête */
 .header {
   text-align: center;
   margin-bottom: 2rem;
@@ -160,16 +119,15 @@ const toggleMode = () => {
 .title {
   font-size: 1.5rem;
   font-weight: bold;
-  color: var(--text-color);
+  color: #fff;
   margin-bottom: 0.5rem;
 }
 
 .subtitle {
-  color: var(--label-color);
+  color: #9CA3AF;
   font-size: 0.875rem;
 }
 
-/* Formulaire */
 .form {
   display: flex;
   flex-direction: column;
@@ -184,22 +142,23 @@ const toggleMode = () => {
 
 .label {
   font-size: 0.875rem;
-  color: var(--label-color);
   font-weight: 500;
+  color: #9CA3AF;
 }
 
 .input {
   width: 100%;
   padding: 0.75rem 1rem;
-  background-color: var(--input-bg);
-  color: var(--text-color);
+  background-color: #374151;
+  color: #fff;
   border: none;
-  border-radius: var(--border-radius);
-  font-size: 16px; /* Empêche le zoom sur iOS */
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
 }
 
 .input:focus {
-  outline: 2px solid var(--primary-color);
+  outline: 2px solid #8B5CF6;
   outline-offset: 2px;
 }
 
@@ -208,22 +167,19 @@ const toggleMode = () => {
   cursor: not-allowed;
 }
 
-/* Message d'erreur */
 .error-message {
-  color: var(--error-color);
+  color: #EF4444;
   font-size: 0.875rem;
   text-align: center;
-  margin-top: 0.5rem;
 }
 
-/* Bouton de soumission */
 .submit-button {
   width: 100%;
   padding: 0.875rem;
-  background-color: var(--primary-color);
+  background-color: #8B5CF6;
   color: white;
   border: none;
-  border-radius: var(--border-radius);
+  border-radius: 0.5rem;
   font-weight: 500;
   cursor: pointer;
   display: flex;
@@ -233,7 +189,7 @@ const toggleMode = () => {
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: var(--primary-hover);
+  background-color: #7C3AED;
 }
 
 .submit-button:disabled {
@@ -241,7 +197,6 @@ const toggleMode = () => {
   cursor: not-allowed;
 }
 
-/* Spinner de chargement */
 .loading-spinner {
   width: 1rem;
   height: 1rem;
@@ -252,17 +207,18 @@ const toggleMode = () => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* Toggle button */
 .toggle-container {
   text-align: center;
   margin-top: 1.5rem;
 }
 
 .toggle-button {
-  color: var(--primary-color);
+  color: #8B5CF6;
   font-size: 0.875rem;
   padding: 0.5rem 1rem;
   background: none;
@@ -280,148 +236,68 @@ const toggleMode = () => {
   cursor: not-allowed;
 }
 
-/* Optimisations mobiles */
-@supports (-webkit-touch-callout: none) {
-  .input, button {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-}
-
-/* Safe areas iOS */
-.ios .login-container {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.login-container {
-  width: 100%;
-  max-width: 24rem;
-  padding: 1rem;
-  margin: 0 auto;
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.login-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-color);
-  margin-bottom: 0.5rem;
-}
-
-.login-subtitle {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background-color: var(--input-bg);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  font-size: 1rem;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-transparent);
-}
-
-.form-button {
-  width: 100%;
-  padding: 0.875rem;
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.form-button:hover:not(:disabled) {
-  background-color: var(--primary-hover);
-}
-
-.form-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.error-message {
-  color: var(--error);
-  font-size: 0.875rem;
-  text-align: center;
-  margin-top: 0.5rem;
-}
-
-.toggle-container {
-  text-align: center;
-  margin-top: 1.5rem;
-}
-
-.toggle-button {
-  color: var(--primary);
-  font-size: 0.875rem;
-  padding: 0.5rem 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.toggle-button:hover:not(:disabled) {
-  opacity: 0.8;
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.form {
-  animation: fadeIn 0.3s ease-out;
-}
-
 /* Platform specific styles */
 .ios {
-  --form-radius: 10px;
+  --primary-color: #007AFF;
+  --input-bg: #1C1C1E;
+}
+
+.ios .input {
+  border-radius: 10px;
+  background-color: var(--input-bg);
+}
+
+.ios .submit-button {
+  background-color: var(--primary-color);
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.ios .toggle-button {
+  color: var(--primary-color);
 }
 
 .android {
-  --form-radius: 8px;
+  --primary-color: #3DDC84;
+  --input-bg: #2C2C2C;
 }
 
-/* Responsive */
-@media (min-width: 640px) {
+.android .input {
+  border-radius: 4px;
+  background-color: var(--input-bg);
+}
+
+.android .submit-button {
+  background-color: var(--primary-color);
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.android .toggle-button {
+  color: var(--primary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
   .login-container {
-    padding: 2rem;
+    padding: 1.5rem;
+  }
+  
+  .input,
+  .submit-button {
+    font-size: 16px;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .input,
+  .submit-button,
+  .toggle-button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 </style>

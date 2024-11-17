@@ -14,7 +14,7 @@ export const useChatStore = defineStore('chat', () => {
     chats.value = [
       {
         id: 1,
-        name: "John Smith",
+        name: "John Wander",
         avatar: "/api/placeholder/48/48",
         online: true,
         lastMessage: "See you tomorrow at the meeting! 👋",

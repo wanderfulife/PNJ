@@ -3,16 +3,20 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/useAuthStore'
 
 const authStore = useAuthStore()
+const platformClass = computed(() => authStore.platform?.toLowerCase())
 
 const props = defineProps({
   modelValue: {
-    type: String,
+    type: [String, Number],
     default: ''
   },
-  placeholder: {
+  type: {
     type: String,
-    default: ''
+    default: 'text'
   },
+  placeholder: String,
+  label: String,
+  error: String,
   maxHeight: {
     type: [String, Number],
     default: 120
@@ -24,17 +28,12 @@ const emit = defineEmits(['update:modelValue', 'submit'])
 const input = ref(null)
 const content = ref(props.modelValue)
 
-// Platform detection
-const platformClass = computed(() => authStore.platform?.toLowerCase())
-
-// Computed max height
 const computedMaxHeight = computed(() => {
   return typeof props.maxHeight === 'number' 
     ? `${props.maxHeight}px` 
     : props.maxHeight
 })
 
-// Safe height update
 const updateHeight = () => {
   if (!input.value) return
   
@@ -66,7 +65,6 @@ const onKeydown = (e) => {
   }
 }
 
-// Watch for external value changes
 watch(() => props.modelValue, (newVal) => {
   if (newVal !== content.value) {
     content.value = newVal
@@ -80,56 +78,109 @@ onMounted(() => {
 </script>
 
 <template>
-  <div :class="['base-input-container', platformClass]">
-    <textarea
-      ref="input"
-      v-model="content"
-      class="base-input"
-      :style="{ maxHeight: computedMaxHeight }"
-      rows="1"
-      :placeholder="placeholder"
-      @input="onInput"
-      @keydown="onKeydown"
-    />
-    <slot name="suffix" />
+  <div :class="['base-input-container', platformClass, { 'has-error': error }]">
+    <label 
+      v-if="label"
+      class="input-label"
+      :for="label"
+    >
+      {{ label }}
+    </label>
+
+    <div class="input-wrapper">
+      <textarea
+        ref="input"
+        :id="label"
+        v-model="content"
+        class="base-input"
+        :class="{ 'has-error': error }"
+        :style="{ maxHeight: computedMaxHeight }"
+        :type="type"
+        :placeholder="placeholder"
+        rows="1"
+        @input="onInput"
+        @keydown="onKeydown"
+      />
+      <slot name="suffix" />
+    </div>
+
+    <span 
+      v-if="error"
+      class="error-message"
+      role="alert"
+    >
+      {{ error }}
+    </span>
   </div>
 </template>
 
 <style scoped>
 .base-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.input-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.input-wrapper {
   position: relative;
   display: flex;
   align-items: flex-end;
-  background-color: var(--gray-800);
-  border-radius: 9999px;
-  min-height: 42px;
 }
 
 .base-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: var(--foreground);
-  font-family: inherit;
-  font-size: var(--text-base);
-  line-height: 1.5;
-  min-height: 42px;
-  outline: none;
-  padding: 0.75rem 1rem;
-  resize: none;
   width: 100%;
+  min-height: 42px;
+  padding: var(--spacing-2) var(--spacing-3);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--platform-radius);
+  font-family: inherit;
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  resize: none;
+  transition: all var(--transition-fast);
 }
 
-.base-input::placeholder {
-  color: var(--gray-400);
+.base-input:focus {
+  outline: none;
+  border-color: var(--platform-primary);
+  background-color: var(--color-surface-light);
+}
+
+.base-input.has-error {
+  border-color: var(--color-error);
+}
+
+.error-message {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  animation: shake var(--transition-fast);
 }
 
 /* Platform specific styles */
 .ios .base-input {
-  font-size: 16px !important;
+  border-radius: calc(var(--platform-radius) * 1.2);
 }
 
-/* Hide scrollbar but keep functionality */
+.android .base-input {
+  border-radius: calc(var(--platform-radius) * 1.5);
+}
+
+/* Animations */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* Scroll behavior */
 .base-input {
   scrollbar-width: none;
 }
@@ -138,27 +189,16 @@ onMounted(() => {
   display: none;
 }
 
-/* Focus styles */
-.base-input-container:focus-within {
-  outline: 2px solid var(--primary);
-  outline-offset: -1px;
-}
-
-/* Prevent zoom on iOS */
-@supports (-webkit-touch-callout: none) {
+/* Mobile optimizations */
+@media (hover: none) {
   .base-input {
     font-size: 16px;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
-/* Remove default textarea styles */
-.base-input {
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-/* Ensure smooth height transitions */
-.base-input {
-  transition: height 0.1s ease-out;
+/* Focus visible */
+.base-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--platform-primary);
 }
 </style>
