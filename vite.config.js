@@ -15,7 +15,16 @@ export default defineConfig({
   optimizeDeps: {
     esbuildOptions: {
       target: 'es2020'
-    }
+    },
+    include: [
+      'vue',
+      '@capacitor/core',
+      'lucide-vue-next',
+      'pinia',
+      'vue-router',
+      'firebase/app',
+      'firebase/auth'
+    ]
   },
   server: {
     headers: {
@@ -27,5 +36,8 @@ export default defineConfig({
     alias: {
       '@': '/src'
     }
+  },
+  css: {
+    devSourcemap: true
   }
 })

@@ -15,7 +15,7 @@ const props = defineProps({
   },
   maxHeight: {
     type: [String, Number],
-    default: '120px'
+    default: 120
   }
 })
 
@@ -25,104 +25,126 @@ const input = ref(null)
 const content = ref(props.modelValue)
 
 // Platform detection
-const platformClass = computed(() => authStore.platform.toLowerCase())
+const platformClass = computed(() => authStore.platform?.toLowerCase())
 
-// Hauteur maximale calculée
+// Computed max height
 const computedMaxHeight = computed(() => {
   return typeof props.maxHeight === 'number' 
     ? `${props.maxHeight}px` 
     : props.maxHeight
 })
 
-// Mise à jour de la hauteur sécurisée
+// Safe height update
 const updateHeight = () => {
   if (!input.value) return
   
   requestAnimationFrame(() => {
-    if (input.value && input.value.style) {
-      input.value.style.height = '0'
-      const maxHeightValue = parseInt(computedMaxHeight.value)
-      const newHeight = Math.min(input.value.scrollHeight, maxHeightValue)
-      input.value.style.height = `${newHeight}px`
-    }
+    const el = input.value
+    if (!el) return
+
+    el.style.height = '0'
+    const maxHeightValue = parseInt(computedMaxHeight.value)
+    const scrollHeight = el.scrollHeight
+    const newHeight = Math.min(scrollHeight, maxHeightValue)
+    el.style.height = `${newHeight}px`
   })
 }
 
 const onInput = (e) => {
-  content.value = e.target.value
-  emit('update:modelValue', content.value)
+  const newValue = e.target.value
+  content.value = newValue
+  emit('update:modelValue', newValue)
   updateHeight()
 }
 
 const onKeydown = (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault()
-    emit('submit')
+    if (content.value.trim()) {
+      emit('submit')
+    }
   }
 }
 
-onMounted(() => {
-  updateHeight()
+// Watch for external value changes
+watch(() => props.modelValue, (newVal) => {
+  if (newVal !== content.value) {
+    content.value = newVal
+    updateHeight()
+  }
 })
 
-watch(() => props.modelValue, (newVal) => {
-  content.value = newVal
+onMounted(() => {
   updateHeight()
 })
 </script>
 
 <template>
-  <textarea
-    ref="input"
-    v-model="content"
-    :class="['base-input', platformClass]"
-    :style="{
-      maxHeight: computedMaxHeight
-    }"
-    rows="1"
-    :placeholder="placeholder"
-    @input="onInput"
-    @keydown="onKeydown"
-  />
+  <div :class="['base-input-container', platformClass]">
+    <textarea
+      ref="input"
+      v-model="content"
+      class="base-input"
+      :style="{ maxHeight: computedMaxHeight }"
+      rows="1"
+      :placeholder="placeholder"
+      @input="onInput"
+      @keydown="onKeydown"
+    />
+    <slot name="suffix" />
+  </div>
 </template>
 
 <style scoped>
-/* BaseInput.css */
+.base-input-container {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  background-color: var(--gray-800);
+  border-radius: 9999px;
+  min-height: 42px;
+}
 
 .base-input {
-  width: 100%;
-  background-color: #1f2937; /* bg-gray-800 */
-  border-radius: 9999px;
-  padding: 0.5rem 1rem;
-  color: #ffffff;
-  resize: none;
-  overflow: hidden;
-  min-height: 42px;
+  flex: 1;
+  background: transparent;
   border: none;
+  color: var(--foreground);
   font-family: inherit;
+  font-size: var(--text-base);
   line-height: 1.5;
+  min-height: 42px;
+  outline: none;
+  padding: 0.75rem 1rem;
+  resize: none;
+  width: 100%;
 }
 
 .base-input::placeholder {
-  color: #9ca3af; /* placeholder-gray-400 */
+  color: var(--gray-400);
 }
 
-.base-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px #8b5cf6; /* focus:ring-2 focus:ring-purple-500 */
-}
-
-/* Platform specific adjustments */
+/* Platform specific styles */
 .ios .base-input {
   font-size: 16px !important;
 }
 
-/* Scrollbar styling */
-.base-input::-webkit-scrollbar {
-  width: 0px;
+/* Hide scrollbar but keep functionality */
+.base-input {
+  scrollbar-width: none;
 }
 
-/* Prevent zoom on focus for iOS */
+.base-input::-webkit-scrollbar {
+  display: none;
+}
+
+/* Focus styles */
+.base-input-container:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+}
+
+/* Prevent zoom on iOS */
 @supports (-webkit-touch-callout: none) {
   .base-input {
     font-size: 16px;
