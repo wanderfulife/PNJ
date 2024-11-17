@@ -121,17 +121,27 @@ while true; do
             echo "1) Ouvrir dans Xcode"
             echo "2) Lancer directement (nécessite un appareil connecté)"
             read -p "Votre choix (1/2): " ios_choice
-            case $ios_choice in
-                1)
-                    npx cap open ios
-                    ;;
-                2)
-                    npx cap run ios
-                    ;;
-                *)
-                    echo -e "${RED}Choix invalide${NC}"
-                    ;;
-            esac
+       case $ios_choice in
+    1)
+        npx cap open ios
+        ;;
+    2)
+        # Récupérer la liste des appareils disponibles
+        echo -e "\n${YELLOW}Recherche des appareils iOS disponibles...${NC}"
+        xcrun xctrace list devices
+        echo -e "\n${YELLOW}Entrez l'identifiant de l'appareil cible (UDID):${NC}"
+        read device_id
+        if [ -n "$device_id" ]; then
+            npx cap run ios --target="$device_id" --scheme="App"
+        else
+            echo -e "${RED}Aucun identifiant fourni, utilisation des paramètres par défaut${NC}"
+            npx cap run ios
+        fi
+        ;;
+    *)
+        echo -e "${RED}Choix invalide${NC}"
+        ;;
+esac
             break
             ;;
         4)

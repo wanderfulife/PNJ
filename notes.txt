@@ -1,4 +1,3 @@
-ios problems
 actualiser android ios en live
 tailwind --> css to finish
 ui clean sur all devices / cadrage ui sur tous les devices
