@@ -11,5 +11,5 @@ improve ui chatview etc, like bolt screenshots
 improve message ui and accessibility 
 
 ------------------------------
-18s/11/24
+18/11/24
 
