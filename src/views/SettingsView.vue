@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useProfileStore } from "@/stores/useProfileStore";
@@ -13,20 +13,34 @@ import {
   ChevronLeft,
   Camera,
   Edit2,
+  Trash2,
+  User,
 } from "lucide-vue-next";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const profileStore = useProfileStore();
+const storage = getStorage();
 
 // Reactive state
 const showProfileEdit = ref(false);
 const isLoggingOut = ref(false);
 const isUploadingPhoto = ref(false);
+const isDeletingPhoto = ref(false);
 const editForm = ref({
   displayName: "",
   email: "",
 });
+
+// Computed property for avatar display
+const hasProfilePhoto = computed(() => !!authStore.user?.photoURL);
 
 const settingsItems = [
   {
@@ -59,7 +73,6 @@ const settingsItems = [
   },
 ];
 
-// Methods
 const handleBack = () => {
   router.push("/chat");
 };
@@ -74,6 +87,29 @@ const handleLogout = async () => {
     console.error("Logout error:", error);
   } finally {
     isLoggingOut.value = false;
+  }
+};
+
+const handlePhotoDelete = async () => {
+  if (isDeletingPhoto.value || !authStore.user?.photoURL) return;
+
+  try {
+    isDeletingPhoto.value = true;
+    // Delete from Firebase Storage
+    const photoRef = storageRef(
+      storage,
+      `profile-photos/${authStore.user.uid}`
+    );
+    await deleteObject(photoRef);
+
+    // Update user profile
+    await authStore.updateUserProfile({
+      photoURL: null,
+    });
+  } catch (error) {
+    console.error("Photo deletion error:", error);
+  } finally {
+    isDeletingPhoto.value = false;
   }
 };
 
@@ -109,11 +145,20 @@ const handlePhotoUpload = async (event) => {
 
   try {
     isUploadingPhoto.value = true;
-    // Simulate upload delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    // Upload to Firebase Storage
+    const photoRef = storageRef(
+      storage,
+      `profile-photos/${authStore.user.uid}`
+    );
+    await uploadBytes(photoRef, file);
+
+    // Get download URL
+    const downloadURL = await getDownloadURL(photoRef);
+
+    // Update user profile
     await authStore.updateUserProfile({
-      photoURL: URL.createObjectURL(file),
+      photoURL: downloadURL,
     });
   } catch (error) {
     console.error("Photo upload error:", error);
@@ -147,70 +192,97 @@ onMounted(() => {
     <div class="settings-content">
       <!-- Profile Section -->
       <section class="profile-section">
-        <div class="profile-photo">
-          <img
-            :src="authStore.user?.photoURL || '/api/placeholder/80/80'"
-            :alt="`${authStore.user?.displayName}'s profile photo`"
-            class="photo"
-          />
-          <label class="photo-upload" :class="{ uploading: isUploadingPhoto }">
-            <Camera class="icon" aria-hidden="true" />
-            <input
-              type="file"
-              accept="image/*"
-              class="hidden"
-              @change="handlePhotoUpload"
-              :disabled="isUploadingPhoto"
-            />
-          </label>
-        </div>
+        <div class="profile-container">
+          <div class="profile-photo-container">
+            <!-- Photo or Avatar -->
+            <div class="profile-photo-wrapper">
+              <div v-if="!hasProfilePhoto" class="default-avatar">
+                <User class="avatar-icon" aria-hidden="true" />
+              </div>
+              <img
+                v-else
+                :src="authStore.user?.photoURL"
+                :alt="`${authStore.user?.displayName}'s profile photo`"
+                class="photo"
+              />
+            </div>
 
-        <!-- Profile Info -->
-        <div v-if="!showProfileEdit" class="profile-info">
-          <h2 class="profile-name">
-            {{ authStore.user?.displayName || "Set your name" }}
-          </h2>
-          <p class="profile-email">{{ authStore.user?.email }}</p>
-          <button class="edit-button" @click="startProfileEdit">
-            <Edit2 class="icon" aria-hidden="true" />
-            <span>Edit Profile</span>
-          </button>
-        </div>
+            <!-- Photo Actions -->
+            <div class="photo-actions">
+              <label
+                class="action-button upload"
+                :class="{ disabled: isUploadingPhoto }"
+              >
+                <Camera class="action-icon" aria-hidden="true" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  @change="handlePhotoUpload"
+                  :disabled="isUploadingPhoto"
+                />
+              </label>
 
-        <!-- Edit Form -->
-        <form v-else class="edit-form" @submit.prevent="handleProfileUpdate">
-          <div class="form-group">
-            <input
-              v-model="editForm.displayName"
-              type="text"
-              placeholder="Display Name"
-              class="form-input"
-            />
-            <input
-              v-model="editForm.email"
-              type="email"
-              placeholder="Email"
-              class="form-input"
-            />
+              <button
+                v-if="hasProfilePhoto"
+                class="action-button delete"
+                @click="handlePhotoDelete"
+                :disabled="isDeletingPhoto"
+                :class="{ disabled: isDeletingPhoto }"
+                aria-label="Delete profile photo"
+              >
+                <Trash2 class="action-icon" aria-hidden="true" />
+              </button>
+            </div>
           </div>
 
-          <div class="button-group">
-            <button
-              type="submit"
-              class="save-button"
-              :disabled="authStore.loading"
-            >
-              {{ authStore.loading ? "Saving..." : "Save Changes" }}
-            </button>
-            <button
-              type="button"
-              class="cancel-button"
-              @click="showProfileEdit = false"
-            >
-              Cancel
+          <!-- Profile Info -->
+          <div class="profile-info" v-if="!showProfileEdit">
+            <h2 class="profile-name">
+              {{ authStore.user?.displayName || "Set your name" }}
+            </h2>
+            <p class="profile-email">{{ authStore.user?.email }}</p>
+            <button class="edit-button" @click="startProfileEdit">
+              <Edit2 class="icon" aria-hidden="true" />
+              <span>Edit Profile</span>
             </button>
           </div>
-        </form>
+
+          <!-- Edit Form -->
+          <form v-else class="edit-form" @submit.prevent="handleProfileUpdate">
+            <div class="form-group">
+              <input
+                v-model="editForm.displayName"
+                type="text"
+                placeholder="Display Name"
+                class="form-input"
+              />
+              <input
+                v-model="editForm.email"
+                type="email"
+                placeholder="Email"
+                class="form-input"
+              />
+            </div>
+
+            <div class="button-group">
+              <button
+                type="submit"
+                class="save-button"
+                :disabled="authStore.loading"
+              >
+                {{ authStore.loading ? "Saving..." : "Save Changes" }}
+              </button>
+              <button
+                type="button"
+                class="cancel-button"
+                @click="showProfileEdit = false"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </section>
 
       <!-- Settings List -->
@@ -310,52 +382,118 @@ onMounted(() => {
 .profile-section {
   background-color: #1f2937;
   border-radius: 1rem;
-  padding: 1.5rem;
+  padding: 2rem 1.5rem;
   margin-bottom: 1.5rem;
-  text-align: center;
 }
 
-.profile-photo {
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.profile-photo-container {
   position: relative;
-  width: 5rem;
-  height: 5rem;
-  margin: 0 auto 1rem;
+  margin-bottom: 1rem;
+}
+
+.profile-photo-wrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #374151;
+  border: 3px solid #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+}
+
+.default-avatar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #7c3aed;
+  color: #fff;
+}
+
+.avatar-icon {
+  width: 50%;
+  height: 50%;
 }
 
 .photo {
   width: 100%;
   height: 100%;
-  border-radius: 9999px;
   object-fit: cover;
 }
 
-.photo-upload {
+/* Photo Actions */
+.photo-actions {
   position: absolute;
   bottom: 0;
-  right: 0;
-  width: 1.75rem;
-  height: 1.75rem;
-  background-color: #7c3aed;
+  right: -0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  background-color: #111827;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.action-button {
+  width: 2rem;
+  height: 2rem;
   border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  border: none;
+  padding: 0;
+  color: white;
 }
 
-.photo-upload:hover {
+.action-button.upload {
+  background-color: #7c3aed;
+}
+
+.action-button.delete {
+  background-color: #ef4444;
+}
+
+.action-button:hover:not(.disabled) {
   transform: scale(1.1);
+  filter: brightness(110%);
 }
 
-.photo-upload.uploading {
-  opacity: 0.7;
+.action-button.disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
+}
+
+.action-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.hidden {
+  display: none;
 }
 
 /* Profile Info */
+.profile-info {
+  text-align: center;
+  width: 100%;
+}
+
 .profile-name {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
@@ -366,6 +504,7 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
+/* Edit Button & Form */
 .edit-button {
   display: inline-flex;
   align-items: center;
@@ -377,16 +516,18 @@ onMounted(() => {
   color: #fff;
   font-size: 0.875rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
 .edit-button:hover {
   background-color: #4b5563;
+  transform: translateY(-1px);
 }
 
-/* Edit Form */
 .edit-form {
-  animation: fadeIn 0.3s ease-out;
+  width: 100%;
+  max-width: 400px;
+  animation: slideUp 0.3s ease-out;
 }
 
 .form-group {
@@ -403,16 +544,19 @@ onMounted(() => {
   border-radius: 0.5rem;
   color: #fff;
   font-size: 1rem;
+  transition: all 0.2s;
 }
 
 .form-input:focus {
   outline: none;
   border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
 }
 
+/* Button Group */
 .button-group {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .save-button,
@@ -423,26 +567,32 @@ onMounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  border: none;
 }
 
 .save-button {
   background-color: #7c3aed;
   color: #fff;
-  border: none;
 }
 
 .save-button:hover:not(:disabled) {
   background-color: #6d28d9;
+  transform: translateY(-1px);
+}
+
+.save-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .cancel-button {
   background-color: #374151;
   color: #fff;
-  border: none;
 }
 
 .cancel-button:hover {
   background-color: #4b5563;
+  transform: translateY(-1px);
 }
 
 /* Settings List */
@@ -457,12 +607,17 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid #374151;
+  transition: background-color 0.2s;
 }
 
 .settings-item:last-child {
   border-bottom: none;
+}
+
+.settings-item:hover {
+  background-color: #2d3748;
 }
 
 .item-content {
@@ -485,37 +640,6 @@ onMounted(() => {
   color: #9ca3af;
 }
 
-/* Toggle Switch */
-.toggle-switch {
-  width: 3rem;
-  height: 1.75rem;
-  background-color: #374151;
-  border-radius: 9999px;
-  position: relative;
-  transition: background-color 0.2s;
-  border: none;
-  cursor: pointer;
-}
-
-.toggle-switch.active {
-  background-color: #7c3aed;
-}
-
-.toggle-knob {
-  position: absolute;
-  left: 0.25rem;
-  top: 0.25rem;
-  width: 1.25rem;
-  height: 1.25rem;
-  background-color: #fff;
-  border-radius: 9999px;
-  transition: transform 0.2s;
-}
-
-.toggle-switch.active .toggle-knob {
-  transform: translateX(1.25rem);
-}
-
 /* Logout Button */
 .logout-button {
   width: 100%;
@@ -535,6 +659,7 @@ onMounted(() => {
 
 .logout-button:hover:not(:disabled) {
   background-color: #374151;
+  transform: translateY(-1px);
 }
 
 .logout-button:disabled {
@@ -542,75 +667,7 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-/* Icon Styles */
-.icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  flex-shrink: 0;
-}
-
-/* Platform Specific Styles */
-.ios {
-  --safe-area-top: env(safe-area-inset-top);
-  --safe-area-bottom: env(safe-area-inset-bottom);
-}
-
-.ios .settings-header {
-  padding-top: calc(1rem + var(--safe-area-top));
-}
-
-.ios .settings-content {
-  padding-bottom: calc(1rem + var(--safe-area-bottom));
-}
-
-.ios .toggle-switch {
-  border-radius: 1.125rem;
-}
-
-.ios .form-input,
-.ios .save-button,
-.ios .cancel-button {
-  border-radius: 0.75rem;
-}
-
-.android .toggle-switch {
-  height: 1.5rem;
-  border-radius: 0.75rem;
-}
-
-.android .toggle-knob {
-  width: 1rem;
-  height: 1rem;
-}
-
-.android .settings-item {
-  position: relative;
-  overflow: hidden;
-}
-
-.android .settings-item::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-color: currentColor;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.android .settings-item:active::after {
-  opacity: 0.1;
-}
-
 /* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -633,26 +690,19 @@ onMounted(() => {
 }
 
 /* Loading States */
-.profile-section[data-loading="true"] {
-  opacity: 0.7;
+.uploading,
+.deleting {
+  position: relative;
   pointer-events: none;
 }
 
-/* Touch Optimizations */
-@media (hover: none) {
-  .settings-item,
-  .back-button,
-  .edit-button,
-  .save-button,
-  .cancel-button,
-  .logout-button,
-  .toggle-switch {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .form-input {
-    font-size: 16px;
-  }
+.uploading::after,
+.deleting::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: inherit;
 }
 
 /* Responsive Adjustments */
@@ -661,24 +711,23 @@ onMounted(() => {
     padding: 2rem;
   }
 
-  .profile-section,
-  .settings-list {
-    border-radius: 1.25rem;
+  .profile-photo-wrapper {
+    width: 140px;
+    height: 140px;
   }
 
-  .profile-photo {
-    width: 6rem;
-    height: 6rem;
+  .action-button {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .action-icon {
+    width: 1.25rem;
+    height: 1.25rem;
   }
 }
 
-/* Accessibility Focus Styles */
-:focus-visible {
-  outline: 2px solid #7c3aed;
-  outline-offset: 2px;
-}
-
-/* Dark Mode Enhancement */
+/* Dark Mode Enhancements */
 @media (prefers-color-scheme: dark) {
   .settings-view {
     background-color: #0f1421;
@@ -694,84 +743,17 @@ onMounted(() => {
   }
 }
 
-/* Error States */
-.form-input.error {
-  border-color: #ef4444;
+/* Platform-Specific Styles */
+.ios {
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
 }
 
-.error-message {
-  color: #ef4444;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  animation: shake 0.4s ease-in-out;
+.ios .settings-header {
+  padding-top: calc(1rem + var(--safe-area-top));
 }
 
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-4px);
-  }
-  75% {
-    transform: translateX(4px);
-  }
-}
-
-/* Transitions */
-.settings-item {
-  transition: background-color 0.2s, transform 0.2s;
-}
-
-.settings-item:active {
-  transform: scale(0.99);
-}
-
-/* Success States */
-.success-message {
-  color: #10b981;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  animation: slideUp 0.3s ease-out;
-}
-
-/* Scroll Behavior */
-.settings-content {
-  scrollbar-width: thin;
-  scrollbar-color: #4b5563 transparent;
-}
-
-.settings-content::-webkit-scrollbar {
-  width: 4px;
-}
-
-.settings-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.settings-content::-webkit-scrollbar-thumb {
-  background-color: #4b5563;
-  border-radius: 2px;
-}
-
-/* Performance Optimizations */
-.settings-view * {
-  backface-visibility: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* High Contrast Mode */
-@media (forced-colors: active) {
-  .toggle-switch {
-    border: 1px solid currentColor;
-  }
-
-  .toggle-knob {
-    background-color: currentColor;
-  }
+.ios .settings-content {
+  padding-bottom: calc(1rem + var(--safe-area-bottom));
 }
 </style>

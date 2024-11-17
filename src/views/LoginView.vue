@@ -1,25 +1,25 @@
 <script setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/useAuthStore'
-import LoginForm from '@/components/auth/LoginForm.vue'
+import { computed } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/useAuthStore";
+import LoginForm from "@/components/auth/LoginForm.vue";
 
-const router = useRouter()
-const authStore = useAuthStore()
-const platformClass = computed(() => authStore.platform?.toLowerCase())
+const router = useRouter();
+const authStore = useAuthStore();
+const platformClass = computed(() => authStore.platform?.toLowerCase());
 
 const handleSubmit = async ({ email, password, isRegistering }) => {
   try {
     if (isRegistering) {
-      await authStore.register(email, password)
+      await authStore.register(email, password);
     } else {
-      await authStore.login(email, password)
+      await authStore.login(email, password);
     }
-    await router.push('/chat')
+    await router.push("/chat");
   } catch (error) {
-    console.error('Authentication error:', error)
+    console.error("Authentication error:", error);
   }
-}
+};
 </script>
 
 <template>
@@ -27,11 +27,6 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
     <div class="safe-area-top" />
 
     <main class="login-content">
-      <div class="brand">
-        <h1 class="brand-title">Welcome</h1>
-        <p class="brand-subtitle">Connect and chat seamlessly</p>
-      </div>
-
       <LoginForm
         :loading="authStore.loading"
         :error="authStore.error"
