@@ -1,146 +1,69 @@
+# ChatInput.vue
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Send, Paperclip, Image, Smile, Mic } from 'lucide-vue-next'
-import BaseInput from '../ui/BaseInput.vue'
-import { Keyboard } from '@capacitor/keyboard'
-import { Capacitor } from '@capacitor/core'
+import { ref, computed } from 'vue'
+import { Paperclip, Image, Smile, Mic } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/useAuthStore'
 
 const authStore = useAuthStore()
 const emit = defineEmits(['send'])
 
-// State
 const message = ref('')
-const baseInputRef = ref(null)
-const isNative = Capacitor.isNativePlatform()
-const keyboardHeight = ref(0)
 const isRecording = ref(false)
 
-// Platform detection
 const platformClass = computed(() => authStore.platform?.toLowerCase())
 
-// Message handling
 const handleSend = () => {
   if (!message.value.trim()) return
-  
   emit('send', message.value.trim())
   message.value = ''
-  
-  // Reset input height after sending
-  requestAnimationFrame(() => {
-    if (baseInputRef.value?.$el) {
-      baseInputRef.value.$el.style.height = '42px'
-    }
-  })
 }
 
-// Keyboard handling for native platforms
-const setupKeyboardListeners = async () => {
-  if (!isNative) return
-
-  try {
-    await Keyboard.addListener('keyboardWillShow', (info) => {
-      keyboardHeight.value = info.keyboardHeight
-    })
-
-    await Keyboard.addListener('keyboardWillHide', () => {
-      keyboardHeight.value = 0
-    })
-  } catch (error) {
-    console.error('Error setting up keyboard listeners:', error)
+const handleKeydown = (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    handleSend()
   }
 }
-
-// Voice recording handlers
-const startRecording = () => {
-  isRecording.value = true
-}
-
-const stopRecording = () => {
-  isRecording.value = false
-}
-
-// Lifecycle hooks
-onMounted(setupKeyboardListeners)
-
-onUnmounted(async () => {
-  if (isNative) {
-    try {
-      await Keyboard.removeAllListeners()
-    } catch (error) {
-      console.error('Error removing keyboard listeners:', error)
-    }
-  }
-})
 </script>
 
 <template>
-  <div class="chat-input-wrapper">
-    <div 
-      :class="['chat-input-container', platformClass]"
-      :style="{ paddingBottom: `${keyboardHeight}px` }"
-    >
-      <div class="chat-input-inner">
-        <!-- Attachment buttons -->
-        <button class="chat-button" type="button">
-          <Paperclip class="icon-button" />
+  <div class="chat-input-wrapper" :class="[platformClass]">
+    <div class="chat-input-container">
+      <!-- Action buttons group -->
+      <div class="actions-group">
+        <!-- Clip button -->
+        <button class="action-btn btn-clip">
+          <Paperclip class="icon" />
         </button>
-        
-        <button class="chat-button" type="button">
-          <Image class="icon-button" />
+
+        <!-- Gallery button -->
+        <button class="action-btn btn-gallery">
+          <Image class="icon" />
         </button>
-        
-        <!-- Input area -->
-        <div class="input-wrapper">
-          <BaseInput
-            ref="baseInputRef"
-            v-model="message"
-            placeholder="Type a message"
-            :max-height="120"
-            @submit="handleSend"
-          >
-            <template #suffix>
-              <button class="chat-button" type="button">
-                <Smile class="icon-button" />
-              </button>
-            </template>
-          </BaseInput>
-        </div>
-        
-        <!-- Send/Record button -->
-        <div class="action-wrapper">
-          <button
-            v-if="message.trim()"
-            class="send-button"
-            :disabled="!message.trim()"
-            @click="handleSend"
-          >
-            <Send class="icon-button" />
-          </button>
-          
-          <button
-            v-else
-            class="record-button"
-            @touchstart="startRecording"
-            @touchend="stopRecording"
-            @mousedown="startRecording"
-            @mouseup="stopRecording"
-            @mouseleave="stopRecording"
-          >
-            <Mic 
-              class="icon-button"
-              :class="{ 'recording': isRecording }"
-            />
-          </button>
-        </div>
       </div>
 
-      <!-- Recording indicator -->
-      <div 
-        v-if="isRecording"
-        class="recording-indicator"
-      >
-        Recording... Slide to cancel
+      <!-- Message input -->
+      <div class="input-field-wrapper">
+        <input
+          v-model="message"
+          type="text"
+          placeholder="Type a message"
+          class="message-input"
+          @keydown="handleKeydown"
+        />
+      </div>
+
+      <!-- Right actions group -->
+      <div class="actions-group">
+        <!-- Emoji button -->
+        <button class="action-btn btn-emoji">
+          <Smile class="icon" />
+        </button>
+
+        <!-- Voice message button -->
+        <button class="action-btn btn-voice">
+          <Mic class="icon" />
+        </button>
       </div>
     </div>
   </div>
@@ -149,284 +72,152 @@ onUnmounted(async () => {
 <style scoped>
 .chat-input-wrapper {
   position: relative;
-  background-color: var(--background);
+  width: 100%;
+  background-color: #0f1117;
+  margin-top: -1px; /* Supprime l'espace blanc */
+  padding: 12px 6px;
 }
 
-.chat-input-container {
-  position: relative;
-  background-color: var(--background);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid var(--gray-800);
-}
-
-.chat-input-inner {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-}
-
-/* Buttons */
-.chat-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--foreground);
-  cursor: pointer;
-  transition: background-color 0.2s;
-  flex-shrink: 0;
-}
-
-.chat-button:hover {
-  background-color: var(--gray-800);
-}
-
-.icon-button {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-/* Input area */
-.input-wrapper {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Send/Record button */
-.action-wrapper {
-  flex-shrink: 0;
-}
-
-.send-button,
-.record-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.send-button {
-  background-color: var(--primary);
-  color: var(--foreground);
-}
-
-.send-button:hover:not(:disabled) {
-  background-color: var(--primary-hover);
-}
-
-.send-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.record-button {
-  background-color: transparent;
-  color: var(--foreground);
-}
-
-.record-button:hover {
-  background-color: var(--gray-800);
-}
-
-.icon-button.recording {
-  color: var(--error);
-  animation: pulse 1s infinite;
-}
-
-/* Recording indicator */
-.recording-indicator {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 100%;
-  padding: 1rem;
-  background-color: var(--gray-800);
-  color: var(--foreground);
-  text-align: center;
-  font-size: 0.875rem;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-}
-
-/* Platform specific styles */
-.ios {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.android .chat-button::after,
-.android .send-button::after,
-.android .record-button::after {
+.chat-input-wrapper::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background-color: currentColor;
-  border-radius: inherit;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.android .chat-button:active::after,
-.android .send-button:active::after,
-.android .record-button:active::after {
-  opacity: 0.1;
-}
-
-/* Touch optimizations */
-.chat-button,
-.send-button,
-.record-button {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* iOS specific styles */
-@supports (-webkit-touch-callout: none) {
-  .chat-input-container {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
-
-/* Web platform hover effects */
-@media (hover: hover) {
-  .chat-button:hover {
-    background-color: var(--gray-800);
-  }
-
-  .send-button:hover:not(:disabled) {
-    background-color: var(--primary-hover);
-  }
-
-  .record-button:hover {
-    background-color: var(--gray-800);
-  }
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(75, 85, 99, 0.2) 15%,
+    rgba(75, 85, 99, 0.2) 85%,
+    transparent
+  );
 }
 
 .chat-input-container {
   display: flex;
-  flex-direction: column;
-  width: 100%;
-  background-color: var(--background);
-  border-top: 1px solid var(--gray-800);
-}
-
-.input-wrapper {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-}
-
-.input-field {
-  flex: 1;
-  min-height: 42px;
-  padding: 0.75rem 1rem;
-  background-color: var(--gray-800);
-  border: none;
-  border-radius: 9999px;
-  color: var(--foreground);
-  font-size: 1rem;
-  line-height: 1.5;
-  resize: none;
-}
-
-.input-field:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--primary);
-}
-
-.button-container {
-  display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 4px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 4px;
 }
 
-.action-button {
+.actions-group {
+  display: flex;
+  gap: 2px;
+}
+
+.action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3rem;
-  height: 3rem;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background-color: transparent;
+  color: rgba(156, 163, 175, 0.8);
+  transition: all 0.15s ease;
+  background: transparent;
+  position: relative;
+}
+
+.action-btn:hover {
+  background-color: rgba(75, 85, 99, 0.2);
+  color: rgba(156, 163, 175, 1);
+}
+
+.action-btn:active {
+  transform: scale(0.95);
+}
+
+.input-field-wrapper {
+  flex: 1;
+  position: relative;
+  height: 38px;
+  min-width: 0;
+  margin: 0 4px;
+}
+
+.message-input {
+  width: 100%;
+  height: 100%;
+  padding: 8px 16px;
+  background-color: rgba(31, 41, 55, 0.4);
   border: none;
-  color: var(--foreground);
-  transition: background-color 0.2s;
-  cursor: pointer;
+  border-radius: 19px;
+  color: white;
+  font-size: 15px;
+  transition: background-color 0.2s ease;
 }
 
-.send-button {
-  background-color: var(--primary);
+.message-input::placeholder {
+  color: rgb(156, 163, 175);
 }
 
-.send-button:hover:not(:disabled) {
-  background-color: var(--primary-hover);
-}
-
-.attachment-button {
-  padding: 0.5rem;
-}
-
-.attachment-button:hover {
-  background-color: var(--gray-800);
+.message-input:focus {
+  outline: none;
+  background-color: rgba(31, 41, 55, 0.6);
 }
 
 .icon {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 21px;
+  height: 21px;
+  opacity: 0.9;
+  transition: transform 0.2s ease;
 }
 
-.recording-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
-  background-color: var(--error);
-  color: white;
-  font-size: 0.875rem;
+.action-btn:hover .icon {
+  transform: scale(1.1);
 }
 
-/* Animations */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+/* Style particulier pour les boutons */
+.btn-clip:hover { color: #60A5FA; }
+.btn-gallery:hover { color: #34D399; }
+.btn-emoji:hover { color: #FCD34D; }
+.btn-voice:hover { color: #F87171; }
+
+/* Platform specific adjustments */
+.ios {
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
 }
 
-.recording {
-  animation: pulse 1s infinite;
-  color: var(--error);
+/* Ripple effect for Android */
+.android .action-btn {
+  overflow: hidden;
 }
 
-/* Platform specific styles */
-.ios .chat-input-container {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.android .action-button::after {
+.android .action-btn::after {
   content: '';
   position: absolute;
   inset: 0;
   background-color: currentColor;
-  border-radius: inherit;
   opacity: 0;
   transition: opacity 0.2s;
+  border-radius: 50%;
 }
 
-.android .action-button:active::after {
+.android .action-btn:active::after {
   opacity: 0.1;
+}
+
+/* Touch optimization */
+@media (hover: none) {
+  .action-btn {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .message-input {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+}
+
+/* Animations subtiles */
+@keyframes subtle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
+.action-btn:active .icon {
+  animation: subtle-bounce 0.2s ease;
 }
 </style>
