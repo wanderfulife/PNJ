@@ -3,18 +3,10 @@
   "appName": "npc-social-sim",
   "webDir": "dist",
   "server": {
-    "androidScheme": "https",
+    "androidScheme": "http",
     "cleartext": true,
-    "iosScheme": "capacitor",
+    "iosScheme": "http",
     "hostname": "localhost"
-  },
-  "plugins": {
-    "CapacitorHttp": {
-      "enabled": true
-    },
-    "SplashScreen": {
-      "launchShowDuration": 0
-    }
   },
   "ios": {
     "contentInset": "automatic",
@@ -37,6 +29,14 @@
       "allowFileAccessFromFileURLs": true,
       "allowUniversalAccessFromFileURLs": true,
       "mixedContent": true
+    }
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "SplashScreen": {
+      "launchShowDuration": 0
     }
   }
 }

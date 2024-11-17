@@ -31,16 +31,61 @@ check_directory() {
     fi
 }
 
-# Fonction pour le développement web
-run_web_dev() {
-    echo -e "\n${YELLOW}Lancement en mode web développement...${NC}"
-    npm run dev
+# Configure live reload settings
+configure_live_reload() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        LOCAL_IP=$(ipconfig getifaddr en0 || ipconfig getifaddr en1)
+    else
+        LOCAL_IP=$(hostname -I | awk '{print $1}')
+    fi
+
+    # Save current config
+    cp capacitor.config.json capacitor.config.json.bak
+
+    # Update config for live reload
+    cat > capacitor.config.json << EOF
+{
+  "appId": "com.npcsocialsim.app",
+  "appName": "npc-social-sim",
+  "webDir": "dist",
+  "server": {
+    "url": "http://$LOCAL_IP:5173",
+    "cleartext": true,
+    "androidScheme": "http",
+    "iosScheme": "http"
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#111827",
+    "webView": {
+      "allowsInlineMediaPlayback": true,
+      "allowsAirPlayForMediaPlayback": true,
+      "allowsBackForwardNavigationGestures": true,
+      "allowsLinkPreview": true,
+      "scrollEnabled": true,
+      "allowUniversalAccessFromFileURLs": true,
+      "limitsNavigationsToAppBoundDomains": true
+    }
+  },
+  "android": {
+    "backgroundColor": "#111827",
+    "webView": {
+      "allowFileAccess": true,
+      "allowFileAccessFromFileURLs": true,
+      "allowUniversalAccessFromFileURLs": true,
+      "mixedContent": true
+    }
+  }
+}
+EOF
 }
 
-# Fonction pour la prévisualisation web (build)
-run_web_preview() {
-    echo -e "\n${YELLOW}Lancement en mode web production...${NC}"
-    npm run preview
+# Restore original config
+restore_config() {
+    if [ -f "capacitor.config.json.bak" ]; then
+        mv capacitor.config.json.bak capacitor.config.json
+        npx cap sync
+    fi
 }
 
 # 1. Vérification des prérequis
@@ -48,26 +93,6 @@ echo -e "${YELLOW}1. Vérification des prérequis...${NC}"
 check_command "node" || exit 1
 check_command "npm" || exit 1
 check_command "git" || exit 1
-
-# Vérification des outils de développement mobile selon la plateforme choisie
-check_mobile_requirements() {
-    if [ "$1" == "ios" ]; then
-        echo -e "\n${YELLOW}Vérification des outils iOS...${NC}"
-        if [[ "$OSTYPE" != "darwin"* ]]; then
-            echo -e "${RED}❌ Le développement iOS nécessite macOS${NC}"
-            return 1
-        fi
-        check_command "pod" || echo -e "${RED}⚠️ CocoaPods n'est pas installé. Pour iOS, installez-le avec: sudo gem install cocoapods${NC}"
-        check_command "xcodebuild" || echo -e "${RED}⚠️ Xcode n'est pas installé. Installez-le depuis l'App Store${NC}"
-    elif [ "$1" == "android" ]; then
-        echo -e "\n${YELLOW}Vérification des outils Android...${NC}"
-        if [[ -z "${ANDROID_SDK_ROOT}" ]]; then
-            echo -e "${RED}⚠️ ANDROID_SDK_ROOT n'est pas défini${NC}"
-        else
-            echo -e "${GREEN}✓ ANDROID_SDK_ROOT est défini: $ANDROID_SDK_ROOT${NC}"
-        fi
-    fi
-}
 
 # 2. Installation des dépendances
 echo -e "\n${YELLOW}2. Installation des dépendances du projet...${NC}"
@@ -79,29 +104,29 @@ else
     exit 1
 fi
 
-# 3. Menu principal
+# Menu principal
 while true; do
     echo -e "\n${BLUE}=== Menu Principal ===${NC}"
     echo -e "${YELLOW}Choisissez une plateforme :${NC}"
     echo "1) Web (Development)"
     echo "2) Web (Production Preview)"
-    echo "3) iOS"
-    echo "4) Android"
+    echo "3) iOS avec Live Reload"
+    echo "4) Android avec Live Reload"
     echo "5) Quitter"
     read -p "Votre choix (1-5): " platform_choice
 
     case $platform_choice in
         1)
-            run_web_dev
+            echo -e "\n${YELLOW}Lancement du serveur de développement...${NC}"
+            npm run dev
             break
             ;;
         2)
-            # Build puis preview
             echo -e "\n${YELLOW}Construction du projet...${NC}"
             npm run build
             if [ $? -eq 0 ]; then
                 echo -e "${GREEN}✓ Build réussi${NC}"
-                run_web_preview
+                npm run preview
             else
                 echo -e "${RED}❌ Erreur lors du build${NC}"
             fi
@@ -112,58 +137,22 @@ while true; do
                 echo -e "${RED}❌ Le développement iOS nécessite macOS${NC}"
                 continue
             fi
-            check_mobile_requirements "ios"
+            configure_live_reload
             echo -e "\n${YELLOW}Préparation pour iOS...${NC}"
             npm run build
             npx cap sync
             cd ios/App && pod install && cd ../..
-            echo -e "\n${YELLOW}Choisissez une option de lancement :${NC}"
-            echo "1) Ouvrir dans Xcode"
-            echo "2) Lancer directement (nécessite un appareil connecté)"
-            read -p "Votre choix (1/2): " ios_choice
-       case $ios_choice in
-    1)
-        npx cap open ios
-        ;;
-    2)
-        # Récupérer la liste des appareils disponibles
-        echo -e "\n${YELLOW}Recherche des appareils iOS disponibles...${NC}"
-        xcrun xctrace list devices
-        echo -e "\n${YELLOW}Entrez l'identifiant de l'appareil cible (UDID):${NC}"
-        read device_id
-        if [ -n "$device_id" ]; then
-            npx cap run ios --target="$device_id" --scheme="App"
-        else
-            echo -e "${RED}Aucun identifiant fourni, utilisation des paramètres par défaut${NC}"
-            npx cap run ios
-        fi
-        ;;
-    *)
-        echo -e "${RED}Choix invalide${NC}"
-        ;;
-esac
+            npx cap run ios --livereload --external
+            restore_config
             break
             ;;
         4)
-            check_mobile_requirements "android"
+            configure_live_reload
             echo -e "\n${YELLOW}Préparation pour Android...${NC}"
             npm run build
             npx cap sync
-            echo -e "\n${YELLOW}Choisissez une option de lancement :${NC}"
-            echo "1) Ouvrir dans Android Studio"
-            echo "2) Lancer directement (nécessite un appareil connecté)"
-            read -p "Votre choix (1/2): " android_choice
-            case $android_choice in
-                1)
-                    npx cap open android
-                    ;;
-                2)
-                    npx cap run android
-                    ;;
-                *)
-                    echo -e "${RED}Choix invalide${NC}"
-                    ;;
-            esac
+            npx cap run android --livereload --external
+            restore_config
             break
             ;;
         5)
@@ -175,19 +164,3 @@ esac
             ;;
     esac
 done
-
-echo -e "\n${BLUE}=== Notes importantes ===${NC}"
-case $platform_choice in
-    1|2)
-        echo "- Mode web : Utilisez Ctrl+C pour arrêter le serveur"
-        echo "- L'application est accessible via votre navigateur"
-        ;;
-    3)
-        echo "- iOS : Si vous avez choisi Xcode, cliquez sur le bouton play pour lancer l'app"
-        echo "- Assurez-vous d'avoir configuré un compte développeur dans Xcode"
-        ;;
-    4)
-        echo "- Android : Si vous avez choisi Android Studio, attendez la fin de l'indexation"
-        echo "- Vérifiez que votre appareil ou émulateur est bien détecté"
-        ;;
-esac

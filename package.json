@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "cap:add": "cap add",
     "cap:sync": "cap sync",
+    "ios:dev": "npm run build && npx cap sync && npx cap run ios --livereload --external",
+    "android:dev": "npm run build && npx cap sync && npx cap run android --livereload --external",
     "ios:open": "cap open ios",
     "android:open": "cap open android"
   },
