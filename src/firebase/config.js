@@ -9,61 +9,39 @@ import {
 import { Capacitor } from '@capacitor/core';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDZKFJstxeldmesFGloR_0Gh-5q39PLjEY",
-  authDomain: "pnj-jay.firebaseapp.com",
-  projectId: "pnj-jay",
-  storageBucket: "pnj-jay.firebasestorage.app",
-  messagingSenderId: "325908568285",
-  appId: "1:325908568285:web:159f69d049f7864db82334"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 let app = null;
 let auth = null;
 
 export const initializeFirebase = async () => {
-  if (auth) {
-    return { app, auth };
-  }
+  if (auth) return { app, auth };
 
   try {
     if (!app) {
-      app = initializeApp({
-        ...firebaseConfig,
-        // Ajout des options de sécurité supplémentaires
-        authDomain: window.location.hostname === 'localhost' 
-          ? 'localhost' 
-          : firebaseConfig.authDomain
-      });
+      app = initializeApp(firebaseConfig);
     }
 
     const platform = Capacitor.getPlatform();
-    console.log(`Initializing Firebase Auth for platform: ${platform}`);
-
-    const persistenceOrder = [
-      indexedDBLocalPersistence,
-      browserLocalPersistence,
-      inMemoryPersistence,
-    ];
-
+    
     if (platform === 'ios') {
-      try {
-        auth = initializeAuth(app, {
-          persistence: inMemoryPersistence
-        });
-      } catch (error) {
-        console.warn('iOS auth initialization failed, falling back to default:', error);
-        auth = getAuth(app);
-      }
-    } else {
-      try {
-        auth = initializeAuth(app, {
-          persistence: persistenceOrder,
-          popupRedirectResolver: undefined
-        });
-      } catch (error) {
-        console.warn('Auth initialization failed, falling back to default:', error);
-        auth = getAuth(app);
-      }
+      auth = initializeAuth(app, {
+        persistence: inMemoryPersistence
+      });
+    } else { 
+      auth = initializeAuth(app, {
+        persistence: [
+          indexedDBLocalPersistence,
+          browserLocalPersistence,
+          inMemoryPersistence
+        ]
+      });
     }
 
     return { app, auth };
@@ -73,14 +51,8 @@ export const initializeFirebase = async () => {
   }
 };
 
-export const getFirebaseAuth = () => {
-  if (!auth) {
-    return getAuth(app);
-  }
-  return auth;
-};
+export const getFirebaseAuth = () => auth || getAuth(app);
 
-// Initialize Firebase immediately
 initializeFirebase().catch(console.error);
 
 export { auth };

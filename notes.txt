@@ -1,10 +1,8 @@
-tailwind --> css to finish
 ui clean sur all devices / cadrage ui sur tous les devices
 
 ----------------------------------------
 
 finir possible configuration du firebase
-.env a implemneter
 improve ui chatview etc, like bolt screenshots
 improve message ui and accessibility 
 

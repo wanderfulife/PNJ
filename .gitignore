@@ -35,3 +35,7 @@ android/gradle
 android/.gradle
 android/local.properties
 android/*.iml
+
+# env
+.env
+!.env.example
