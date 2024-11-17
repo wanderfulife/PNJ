@@ -5,11 +5,17 @@ import ChatList from '../components/chat/ChatList.vue'
 import ChatArea from '../components/chat/ChatArea.vue'
 import { useChatStore } from '../stores/useChatStore'
 import { useAuthStore } from '../stores/useAuthStore'
+import { storeToRefs } from 'pinia'
 
+// Store initialization
 const chatStore = useChatStore()
 const authStore = useAuthStore()
 
-// State
+// Destructure what we need from the store
+const { chats, selectedChat } = storeToRefs(chatStore)
+const { user } = storeToRefs(authStore)
+
+// Local state
 const isMobile = ref(window.innerWidth < 768)
 const showChatView = ref(false)
 const isTyping = ref(false)
@@ -27,21 +33,22 @@ const handleChatSelect = (chat) => {
 const handleBack = () => {
   showChatView.value = false
   setTimeout(() => {
-    chatStore.selectedChat = null
+    chatStore.selectChat(null)
   }, 300) // Wait for transition to complete
 }
 
 const handleSendMessage = async (message) => {
-  if (!chatStore.selectedChat) return
+  if (!selectedChat.value || !message.trim()) return
 
-  await chatStore.sendMessage(chatStore.selectedChat.id, message)
+  // Appeler sendMessage avec chatId et content séparément
+  await chatStore.sendMessage(selectedChat.value.id, message)
 
-  // Simulate typing for demo
-  if (chatStore.selectedChat.id === 1) { // Only for John's chat
+  // Simulation de réponse pour demo
+  if (selectedChat.value.id === 1) { // Only for first chat
     isTyping.value = true
     setTimeout(() => {
       isTyping.value = false
-      chatStore.sendMessage(chatStore.selectedChat.id, "Thanks for the update! 👍", "john123")
+      chatStore.sendMessage(selectedChat.value.id, "Thanks for the update! 👍")
     }, 2000)
   }
 }
@@ -67,33 +74,32 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="h-full bg-gray-900">
+  <div class="chat-view">
     <!-- Chat List View -->
     <div 
-      class="h-full"
+      class="chat-list-view"
       :class="{ 'hidden': showChatView }"
     >
       <ChatList
-        :chats="chatStore.chats"
-        :selected-chat="chatStore.selectedChat"
-        :current-user="authStore.user"
+        :chats="chats"
+        :selected-chat="selectedChat"
+        :current-user="user"
         @select-chat="handleChatSelect"
       />
     </div>
 
     <!-- Chat Area (Full Screen Modal) -->
     <div 
-      class="fixed inset-0 bg-gray-900 transform transition-all duration-300 ease-in-out"
+      class="chat-area-modal"
       :class="{
-        'translate-x-0 opacity-100': showChatView,
-        'translate-x-full opacity-0 pointer-events-none': !showChatView
+        'visible': showChatView,
+        'hidden': !showChatView
       }"
-      style="z-index: 1000;"
     >
       <ChatArea
-        v-if="chatStore.selectedChat"
-        :chat="chatStore.selectedChat"
-        :current-user-id="authStore.user?.uid"
+        v-if="selectedChat"
+        :chat="selectedChat"
+        :current-user-id="user?.uid"
         :is-typing="isTyping"
         @back="handleBack"
         @send="handleSendMessage"
@@ -103,21 +109,45 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.h-full {
+.chat-view {
   height: 100vh;
   height: calc(var(--vh, 1vh) * 100);
+  background-color: var(--background);
+}
+
+.chat-list-view {
+  height: 100%;
+}
+
+.chat-list-view.hidden {
+  display: none;
+}
+
+.chat-area-modal {
+  position: fixed;
+  inset: 0;
+  background-color: var(--background);
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 0.3s ease-in-out;
+  z-index: 1000;
+}
+
+.chat-area-modal.hidden {
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.chat-area-modal.visible {
+  transform: translateX(0);
+  opacity: 1;
 }
 
 @supports (-webkit-touch-callout: none) {
-  .h-full {
+  .chat-view {
     height: -webkit-fill-available;
   }
-}
-
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
 }
 
 /* Ensure smooth scrolling */

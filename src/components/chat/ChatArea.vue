@@ -1,22 +1,18 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { MoreVertical, Phone, Video } from 'lucide-vue-next'
+import { Phone, Video } from 'lucide-vue-next'
 import ChatHeader from './ChatHeader.vue'
 import ChatInput from './ChatInput.vue'
 import BaseMessage from '../ui/BaseMessage.vue'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { storeToRefs } from 'pinia'
 
 const authStore = useAuthStore()
 
 const props = defineProps({
   chat: {
     type: Object,
-    default: () => ({
-      messages: [],
-      name: '',
-      avatar: '/api/placeholder/48/48',
-      online: false
-    })
+    required: true
   },
   currentUserId: {
     type: String,
@@ -34,8 +30,8 @@ const emit = defineEmits(['back', 'send'])
 const messagesContainer = ref(null)
 const messages = ref(props.chat?.messages || [])
 
-// Computed
-const platformClass = computed(() => authStore.platform.toLowerCase())
+// Platform class computation
+const platformClass = computed(() => authStore.platform?.toLowerCase())
 
 // Methods
 const scrollToBottom = async (smooth = true) => {
@@ -64,37 +60,26 @@ onMounted(() => {
 const handleSend = (message) => {
   emit('send', message)
 }
+
+const handleBack = () => {
+  emit('back')
+}
 </script>
 
 <template>
   <div v-if="chat" :class="['chat-area', platformClass]">
-    <!-- Chat Header -->
     <ChatHeader
       :chat="chat"
-      show-back-button
-      @back="$emit('back')"
-    >
-      <template #actions>
-        <div class="actions-container">
-          <button class="action-button">
-            <Phone class="action-icon" />
-          </button>
-          <button class="action-button">
-            <Video class="action-icon" />
-          </button>
-          <button class="action-button">
-            <MoreVertical class="action-icon" />
-          </button>
-        </div>
-      </template>
-    </ChatHeader>
+      :show-back-button="true"
+      @back="handleBack"
+    />
     
-    <!-- Messages Area -->
+    <!-- Messages Container -->
     <div
       ref="messagesContainer"
       class="messages-container"
     >
-      <div class="messages-space">
+      <div class="messages-wrapper">
         <BaseMessage
           v-for="message in messages"
           :key="message.id"
@@ -116,31 +101,30 @@ const handleSend = (message) => {
       </div>
     </div>
 
-    <!-- Input Area -->
     <ChatInput 
       @send="handleSend"
-      class="input-area"
+      class="chat-input"
     />
   </div>
 </template>
 
 <style scoped>
-/* ChatArea.css */
 .chat-area {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #111827; /* bg-gray-900 */
+  background-color: var(--background);
+  overflow: hidden;
 }
 
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 0.75rem 1rem;
-  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  position: relative;
   scrollbar-width: thin;
-  scrollbar-color: #374151 transparent; /* colors.gray.700 */
+  scrollbar-color: var(--gray-700) transparent;
+  padding: var(--spacing-2) 0;
 }
 
 .messages-container::-webkit-scrollbar {
@@ -152,122 +136,61 @@ const handleSend = (message) => {
 }
 
 .messages-container::-webkit-scrollbar-thumb {
-  background-color: #374151; /* colors.gray.700 */
-  border-radius: 2px;
+  background-color: var(--gray-700);
+  border-radius: var(--radius-full);
 }
 
-.messages-space {
+.messages-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  min-height: 100%;
+  padding-bottom: var(--spacing-4);
 }
 
-/* Action buttons */
-.actions-container {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.action-button {
-  padding: 0.5rem;
-  border-radius: 9999px;
-  transition: background-color 0.2s;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.action-button:hover {
-  background-color: #1f2937; /* hover:bg-gray-800 */
-}
-
-.action-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-/* Typing indicator */
 .typing-indicator {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: #9ca3af; /* text-gray-400 */
-  font-size: 0.875rem;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  color: var(--gray-400);
+  font-size: var(--text-sm);
 }
 
 .typing-dots {
   display: flex;
-  gap: 0.25rem;
+  gap: var(--spacing-1);
 }
 
 .typing-dot {
   width: 0.5rem;
   height: 0.5rem;
-  background-color: #9ca3af; /* bg-gray-400 */
-  border-radius: 9999px;
+  background-color: var(--gray-400);
+  border-radius: var(--radius-full);
+  animation: bounce 1s infinite;
 }
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-0.25rem);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
-.typing-dot:nth-child(1) {
-  animation: bounce 1s infinite;
-  animation-delay: 0ms;
-}
-
-.typing-dot:nth-child(2) {
-  animation: bounce 1s infinite;
-  animation-delay: 150ms;
-}
-
-.typing-dot:nth-child(3) {
-  animation: bounce 1s infinite;
-  animation-delay: 300ms;
-}
-
-.input-area {
-  border-top: 1px solid #1f2937; /* border-gray-800 */
+.chat-input {
+  flex-shrink: 0;
+  border-top: 1px solid var(--gray-800);
+  background-color: var(--background);
+  position: relative;
+  z-index: 1;
 }
 
 /* Platform specific styles */
-/* iOS */
 .ios .messages-container {
-  padding-top: calc(0.75rem + env(safe-area-inset-top));
-  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  padding-top: calc(var(--spacing-2) + env(safe-area-inset-top));
 }
 
-/* Android */
-.android .action-button {
-  position: relative;
-  overflow: hidden;
-}
-
-.android .action-button::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: currentColor;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.android .action-button:active::after {
-  opacity: 0.1;
-}
-
-/* Web */
-@media (hover: hover) {
-  .web .action-button:hover {
-    background-color: #1f2937;
-  }
+.android .messages-container {
+  padding-top: var(--spacing-2);
 }
 </style>

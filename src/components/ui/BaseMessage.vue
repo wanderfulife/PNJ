@@ -23,14 +23,14 @@ defineProps({
 </script>
 
 <template>
-  <div :class="['message', isOutgoing ? 'outgoing' : 'incoming']">
-    <div :class="['message-bubble', isOutgoing ? 'outgoing' : 'incoming']">
-      <p class="message-content">{{ content }}</p>
+  <div :class="['message-container', { 'outgoing': isOutgoing }]">
+    <div :class="['message-bubble', { 'outgoing': isOutgoing }]">
+      <p class="message-text">{{ content }}</p>
       <div class="message-footer">
-        <span class="message-timestamp">{{ timestamp }}</span>
+        <span class="message-time">{{ timestamp }}</span>
         <Check 
           v-if="isOutgoing"
-          class="status-icon"
+          class="message-status"
           :class="{
             'status-sent': status === 'sent',
             'status-delivered': status === 'delivered',
@@ -43,70 +43,86 @@ defineProps({
 </template>
 
 <style scoped>
-/* BaseMessage.css */
-
-.message {
+.message-container {
   display: flex;
   max-width: 85%;
+  margin: var(--spacing-1) 0;
+  padding: 0 var(--spacing-2);
 }
 
-.message.outgoing {
+.message-container.outgoing {
   margin-left: auto;
-  margin-right: initial;
-}
-
-.message.incoming {
-  margin-right: auto;
-  margin-left: initial;
+  justify-content: flex-end;
 }
 
 .message-bubble {
-  border-radius: 1rem;
-  padding: 0.5rem 1rem;
+  position: relative;
+  background-color: var(--gray-800);
+  border-radius: var(--radius-2xl);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom-left-radius: 0;
+  max-width: 100%;
+  word-wrap: break-word;
 }
 
 .message-bubble.outgoing {
-  background-color: #7c3aed; /* bg-purple-600 */
+  background-color: var(--primary);
+  border-bottom-left-radius: var(--radius-2xl);
   border-bottom-right-radius: 0;
 }
 
-.message-bubble.incoming {
-  background-color: #1f2937; /* bg-gray-800 */
-  border-bottom-left-radius: 0;
-}
-
-.message-content {
-  font-size: 1rem;
-  color: #ffffff;
+.message-text {
+  color: var(--foreground);
+  font-size: var(--text-base);
+  line-height: 1.4;
+  white-space: pre-wrap;
 }
 
 .message-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  margin-top: 0.25rem;
-  gap: 0.25rem;
+  gap: var(--spacing-1);
+  margin-top: var(--spacing-1);
 }
 
-.message-timestamp {
-  font-size: 0.75rem;
-  color: #d1d5db; /* text-gray-300 */
+.message-time {
+  font-size: var(--text-xs);
+  color: var(--gray-300);
+  margin-left: var(--spacing-2);
 }
 
-.status-icon {
+.message-status {
   width: 1rem;
   height: 1rem;
+  flex-shrink: 0;
 }
 
-.status-sent {
-  color: #9ca3af; /* text-gray-400 */
+.message-status.status-sent {
+  color: var(--gray-400);
 }
 
-.status-delivered {
-  color: #60a5fa; /* text-blue-400 */
+.message-status.status-delivered {
+  color: var(--blue-400);
 }
 
-.status-read {
-  color: #34d399; /* text-green-400 */
+.message-status.status-read {
+  color: var(--green-400);
+}
+
+/* Animation pour les nouveaux messages */
+@keyframes slideIn {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.message-container {
+  animation: slideIn 0.2s ease-out;
 }
 </style>

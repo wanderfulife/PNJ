@@ -1,31 +1,32 @@
 <script setup>
-import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import LoginForm from '../components/auth/LoginForm.vue'
-import { useAuthStore } from '../stores/useAuthStore'
+import { useAuthStore } from '@/stores/useAuthStore'
+import LoginForm from '@/components/auth/LoginForm.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const handleSubmit = async ({ email, password, isRegistering }) => {
   try {
-    const action = isRegistering ? authStore.register : authStore.login
-    await action(email, password)
-    
-    await router.replace('/chat')
-  } catch (err) {
-    console.error('Auth error:', err)
+    if (isRegistering) {
+      await authStore.register(email, password)
+    } else {
+      await authStore.login(email, password)
+    }
+    await router.push('/chat')
+  } catch (error) {
+    console.error('Authentication error:', error)
   }
 }
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gray-900">
+  <div class="login-view">
     <!-- Safe Area Top -->
-    <div class="safe-area-top bg-gray-900" />
+    <div class="safe-area-top"></div>
 
     <!-- Main Content -->
-    <main class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <main class="login-content">
       <LoginForm
         :loading="authStore.loading"
         :error="authStore.error"
@@ -34,18 +35,42 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
     </main>
 
     <!-- Safe Area Bottom -->
-    <div class="safe-area-bottom bg-gray-900" />
+    <div class="safe-area-bottom"></div>
   </div>
 </template>
 
-<style>
-:root {
-  --viewport-height: 100vh;
+<style scoped>
+.login-view {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background);
 }
 
+.login-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-4);
+}
+
+@media (min-width: 640px) {
+  .login-content {
+    padding: 0 var(--spacing-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .login-content {
+    padding: 0 var(--spacing-8);
+  }
+}
+
+/* Fix for mobile viewport height */
 @supports (-webkit-touch-callout: none) {
-  .min-h-screen {
-    min-height: var(--viewport-height);
+  .login-view {
+    min-height: var(--app-height);
   }
 }
 </style>

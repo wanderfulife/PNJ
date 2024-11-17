@@ -9,20 +9,29 @@ const props = defineProps({
   chat: {
     type: Object,
     required: true
+  },
+  showBackButton: {
+    type: Boolean,
+    default: false
   }
 })
 
 const emit = defineEmits(['back'])
 
-// Computation de la classe de plateforme
-const platformClass = computed(() => authStore.platform.toLowerCase())
+// Platform class computation
+const platformClass = computed(() => authStore.platform?.toLowerCase())
+
+const handleBack = () => {
+  emit('back')
+}
 </script>
 
 <template>
   <div :class="['chat-header', platformClass]">
     <button
+      v-if="showBackButton"
       class="back-button"
-      @click="$emit('back')"
+      @click="handleBack"
     >
       <ChevronLeft class="back-icon" />
     </button>
@@ -31,7 +40,6 @@ const platformClass = computed(() => authStore.platform.toLowerCase())
       <div class="avatar-container">
         <img
           :src="chat.avatar"
-          :alt="chat.name"
           class="avatar"
         />
         <div 
@@ -55,28 +63,28 @@ const platformClass = computed(() => authStore.platform.toLowerCase())
 </template>
 
 <style scoped>
-/* ChatHeader.css */
-
 .chat-header {
   display: flex;
   align-items: center;
   height: 3.5rem;
-  padding: 0 1rem;
-  background-color: #111827; /* bg-gray-900 */
-  border-bottom: 1px solid #1f2937; /* border-gray-800 */
+  padding: 0 var(--spacing-4);
+  background-color: var(--background);
+  border-bottom: 1px solid var(--gray-800);
 }
 
 .back-button {
-  padding: 0.5rem;
-  margin-left: -0.5rem;
-  border-radius: 9999px;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+  padding: var(--spacing-2);
+  margin-left: calc(-1 * var(--spacing-2));
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .back-button:hover {
-  background-color: #1f2937; /* hover:bg-gray-800 */
+  background-color: var(--gray-800);
 }
 
 .back-icon {
@@ -89,7 +97,7 @@ const platformClass = computed(() => authStore.platform.toLowerCase())
   align-items: center;
   flex: 1;
   min-width: 0;
-  margin-left: 0.5rem;
+  margin-left: var(--spacing-2);
 }
 
 .avatar-container {
@@ -100,7 +108,7 @@ const platformClass = computed(() => authStore.platform.toLowerCase())
 .avatar {
   width: 2rem;
   height: 2rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   object-fit: cover;
 }
 
@@ -110,39 +118,42 @@ const platformClass = computed(() => authStore.platform.toLowerCase())
   right: 0;
   width: 0.5rem;
   height: 0.5rem;
-  background-color: #10b981; /* bg-green-500 */
-  border-radius: 9999px;
-  border: 2px solid #111827; /* border-gray-900 */
+  background-color: var(--success);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--background);
 }
 
 .user-info {
-  margin-left: 0.75rem;
+  margin-left: var(--spacing-3);
   min-width: 0;
 }
 
 .user-name {
-  font-size: 1rem;
+  font-size: var(--text-base);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--foreground);
 }
 
 .user-status {
-  font-size: 0.875rem;
-  color: #9ca3af; /* text-gray-400 */
+  font-size: var(--text-sm);
+  color: var(--gray-400);
 }
 
 .menu-button {
-  padding: 0.5rem;
-  border-radius: 9999px;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+  padding: var(--spacing-2);
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .menu-button:hover {
-  background-color: #1f2937; /* hover:bg-gray-800 */
+  background-color: var(--gray-800);
 }
 
 .menu-icon {
@@ -151,16 +162,11 @@ const platformClass = computed(() => authStore.platform.toLowerCase())
 }
 
 /* Platform specific styles */
-/* iOS */
 .ios .chat-header {
   padding-top: env(safe-area-inset-top);
-}
-
-.ios .chat-header {
   height: calc(3.5rem + env(safe-area-inset-top));
 }
 
-/* Android */
 .android .back-button,
 .android .menu-button {
   position: relative;
@@ -171,10 +177,7 @@ const platformClass = computed(() => authStore.platform.toLowerCase())
 .android .menu-button::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-color: currentColor;
   opacity: 0;
   transition: opacity 0.2s;
@@ -185,11 +188,18 @@ const platformClass = computed(() => authStore.platform.toLowerCase())
   opacity: 0.1;
 }
 
-/* Web */
+/* Touch optimizations */
+.back-button,
+.menu-button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Web platform hover effects */
 @media (hover: hover) {
   .web .back-button:hover,
   .web .menu-button:hover {
-    background-color: #1f2937;
+    background-color: var(--gray-800);
   }
 }
 </style>
