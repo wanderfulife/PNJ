@@ -2,7 +2,7 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { Search, Settings } from 'lucide-vue-next';
+import { Search, Settings } from "lucide-vue-next";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -78,7 +78,7 @@ const goToSettings = () => {
       >
         <!-- Avatar -->
         <div class="avatar-wrapper">
-          <img :src="chat.avatar" class="avatar"/>
+          <img :src="chat.avatar" class="avatar" />
           <div v-if="chat.online" class="online-indicator" aria-hidden="true" />
         </div>
 
@@ -96,11 +96,6 @@ const goToSettings = () => {
           {{ chat.unreadCount }}
         </div>
       </button>
-    </div>
-
-    <!-- New Chat Button -->
-    <div class="new-chat-container">
-      <button class="new-chat-button">+ New Chat</button>
     </div>
   </div>
 </template>
@@ -267,37 +262,17 @@ const goToSettings = () => {
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  background-color: #007AFF;
+  background-color: #007aff;
   color: white;
   font-size: 13px;
   font-weight: 600;
   border-radius: 10px;
 }
 
-/* New Chat Button */
-.new-chat-container {
-  padding: 16px;
-}
-
-.new-chat-button {
-  width: 100%;
-  padding: 16px;
-  background-color: #007AFF;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 17px;
-  font-weight: 600;
-}
-
-
-
-
 /* Touch Optimizations */
 @media (hover: none) {
   .chat-item,
-  .settings-button,
-  .new-chat-button {
+  .settings-button {
     -webkit-tap-highlight-color: transparent;
   }
 
