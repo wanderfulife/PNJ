@@ -137,10 +137,10 @@ onUnmounted(() => {
 <style scoped>
 /* Base Layout */
 .chat-view {
-  height: 100vh;
-  height: var(--viewport-height);
-  background-color: #111827;
   display: flex;
+  height: 100%;
+  min-height: 100vh;
+  background-color: #111827;
   overflow: hidden;
 }
 
@@ -229,11 +229,9 @@ onUnmounted(() => {
 
 /* Platform Specific Styles */
 .ios {
-  --safe-area-top: env(safe-area-inset-top);
-  --safe-area-bottom: env(safe-area-inset-bottom);
-  height: calc(var(--viewport-height) - var(--safe-area-top) - var(--safe-area-bottom));
-  padding-top: var(--safe-area-top);
-  padding-bottom: var(--safe-area-bottom);
+  height: 100%;
+  min-height: -webkit-fill-available;
+  padding-bottom: var(--safe-area-inset-bottom);
 }
 
 /* Animations */

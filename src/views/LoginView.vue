@@ -7,6 +7,7 @@ import LoginForm from "@/components/auth/LoginForm.vue";
 const router = useRouter();
 const authStore = useAuthStore();
 const platformClass = computed(() => authStore.platform?.toLowerCase());
+const screenHeight = computed(() => window.innerHeight);
 
 const handleSubmit = async ({ email, password, isRegistering }) => {
   try {
@@ -23,8 +24,10 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
 </script>
 
 <template>
-  <div :class="['login-view', platformClass]">
-    <div class="safe-area-top" />
+  <div 
+    :class="['login-view', platformClass]"
+    :style="{ minHeight: `${screenHeight}px` }">
+    <div  />
 
     <main class="login-content">
       <LoginForm
@@ -40,25 +43,8 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
 
 <style scoped>
 .login-view {
-  min-height: 100vh;
-  min-height: var(--app-height);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(
-    to bottom,
-    var(--color-background),
-    var(--color-surface-light)
-  );
-}
-
-.safe-area-top {
-  height: var(--safe-area-inset-top);
-  background-color: var(--color-background);
-}
-
-.safe-area-bottom {
-  height: var(--safe-area-inset-bottom);
-  background-color: var(--color-surface-light);
 }
 
 .login-content {
@@ -129,10 +115,16 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
   }
 }
 
-/* Fix for iOS height */
+/* Mobile height handling */
 @supports (-webkit-touch-callout: none) {
   .login-view {
-    min-height: -webkit-fill-available;
+    /* Remove min-height: -webkit-fill-available since we're using dynamic height */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
   }
 }
 </style>

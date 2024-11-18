@@ -166,10 +166,7 @@ const handleBack = () => {
 }
 
 /* Platform specific styles */
-.ios {
-  padding-top: var(--safe-area-inset-top);
-  height: calc(3.5rem + var(--safe-area-inset-top));
-}
+
 
 .android .back-button,
 .android .menu-button {

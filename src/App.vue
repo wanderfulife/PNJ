@@ -6,14 +6,15 @@ import { useAuthStore } from './stores/useAuthStore'
 const router = useRouter()
 const authStore = useAuthStore()
 const appReady = ref(false)
+const screenHeight = ref(window.innerHeight)
 
-const handleResize = () => {
-  document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`)
+const updateScreenHeight = () => {
+  screenHeight.value = window.innerHeight
 }
 
 onMounted(async () => {
-  window.addEventListener('resize', handleResize)
-  handleResize()
+  window.addEventListener('resize', updateScreenHeight)
+  updateScreenHeight()
 
   try {
     await authStore.checkAuthState()
@@ -127,8 +128,7 @@ body {
 /* Platform-specific variables */
 .ios {
   /* iOS specific */
-  --safe-area-inset-top: env(safe-area-inset-top);
-  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+
   --platform-radius: 10px;
   --platform-primary: #007AFF;
   --platform-font: -apple-system, BlinkMacSystemFont, sans-serif;

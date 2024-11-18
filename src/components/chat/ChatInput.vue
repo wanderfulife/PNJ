@@ -1,28 +1,28 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { Paperclip, Image, Smile, Mic } from 'lucide-vue-next'
-import { useAuthStore } from '@/stores/useAuthStore'
+import { ref, computed } from "vue";
+import { Paperclip, Image, Smile, Mic } from "lucide-vue-next";
+import { useAuthStore } from "@/stores/useAuthStore";
 
-const authStore = useAuthStore()
-const emit = defineEmits(['send'])
+const authStore = useAuthStore();
+const emit = defineEmits(["send"]);
 
-const message = ref('')
-const isRecording = ref(false)
+const message = ref("");
+const isRecording = ref(false);
 
-const platformClass = computed(() => authStore.platform?.toLowerCase())
+const platformClass = computed(() => authStore.platform?.toLowerCase());
 
 const handleSend = () => {
-  if (!message.value.trim()) return
-  emit('send', message.value.trim())
-  message.value = ''
-}
+  if (!message.value.trim()) return;
+  emit("send", message.value.trim());
+  message.value = "";
+};
 
 const handleKeydown = (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    handleSend()
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    handleSend();
   }
-}
+};
 </script>
 
 <template>
@@ -30,17 +30,11 @@ const handleKeydown = (e) => {
     <div class="chat-input-container">
       <!-- Action buttons group -->
       <div class="actions-group">
-        <button 
-          class="action-btn" 
-          aria-label="Attach file"
-        >
+        <button class="action-btn" aria-label="Attach file">
           <Paperclip class="icon" aria-hidden="true" />
         </button>
 
-        <button 
-          class="action-btn" 
-          aria-label="Send photo"
-        >
+        <button class="action-btn" aria-label="Send photo">
           <Image class="icon" aria-hidden="true" />
         </button>
       </div>
@@ -58,16 +52,13 @@ const handleKeydown = (e) => {
 
       <!-- Right actions group -->
       <div class="actions-group">
-        <button 
-          class="action-btn" 
-          aria-label="Choose emoji"
-        >
+        <button class="action-btn" aria-label="Choose emoji">
           <Smile class="icon" aria-hidden="true" />
         </button>
 
-        <button 
+        <button
           class="action-btn"
-          :class="{ 'recording': isRecording }"
+          :class="{ recording: isRecording }"
           aria-label="Record voice message"
         >
           <Mic class="icon" aria-hidden="true" />
@@ -80,8 +71,12 @@ const handleKeydown = (e) => {
 <style scoped>
 .chat-input-wrapper {
   background-color: #111827;
-  border-top: 1px solid rgba(75, 85, 99, 0.2);
   padding: 0.75rem 0.375rem;
+  margin-top: auto; /* Add this */
+  flex-shrink: 0; /* Add this */
+  width: 100%; /* Add this */
+  position: relative; /* Change to relative */
+  z-index: 10; /* Add this */
 }
 
 .chat-input-container {
@@ -105,7 +100,7 @@ const handleKeydown = (e) => {
   width: 2.375rem;
   height: 2.375rem;
   border-radius: 50%;
-  color: #9CA3AF;
+  color: #9ca3af;
   transition: all 0.15s ease;
   background: transparent;
   border: none;
@@ -114,7 +109,7 @@ const handleKeydown = (e) => {
 
 .action-btn:hover {
   background-color: rgba(75, 85, 99, 0.2);
-  color: #D1D5DB;
+  color: #d1d5db;
 }
 
 .action-btn:active {
@@ -142,7 +137,7 @@ const handleKeydown = (e) => {
 }
 
 .message-input::placeholder {
-  color: #9CA3AF;
+  color: #9ca3af;
 }
 
 .message-input:focus {
@@ -162,15 +157,20 @@ const handleKeydown = (e) => {
 }
 
 /* Style spécifique aux actions */
-.action-btn:nth-child(1):hover { color: #60A5FA; } /* Attach */
-.action-btn:nth-child(2):hover { color: #34D399; } /* Image */
-.action-btn:first-of-type:hover { color: #FCD34D; } /* Emoji */
-.action-btn:last-of-type:hover { color: #F87171; } /* Voice */
+.action-btn:nth-child(1):hover {
+  color: #60a5fa;
+} /* Attach */
+.action-btn:nth-child(2):hover {
+  color: #34d399;
+} /* Image */
+.action-btn:first-of-type:hover {
+  color: #fcd34d;
+} /* Emoji */
+.action-btn:last-of-type:hover {
+  color: #f87171;
+} /* Voice */
 
 /* Platform specific styles */
-.ios {
-  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-}
 
 .ios .message-input {
   font-size: 1rem;
@@ -181,7 +181,7 @@ const handleKeydown = (e) => {
 }
 
 .android .action-btn::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-color: currentColor;
@@ -196,14 +196,20 @@ const handleKeydown = (e) => {
 
 /* Recording state */
 .recording {
-  color: #EF4444;
+  color: #ef4444;
   animation: pulse 1.5s infinite;
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Touch optimizations */
@@ -211,7 +217,7 @@ const handleKeydown = (e) => {
   .action-btn {
     -webkit-tap-highlight-color: transparent;
   }
-  
+
   .message-input {
     font-size: 1rem; /* Prevent zoom on iOS */
   }
@@ -219,8 +225,13 @@ const handleKeydown = (e) => {
 
 /* Animations subtiles */
 @keyframes subtle-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
 }
 
 .action-btn:active .icon {

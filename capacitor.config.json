@@ -9,8 +9,9 @@
     "hostname": "localhost"
   },
   "ios": {
-    "contentInset": "automatic",
-    "backgroundColor": "#111827",
+    "contentInset": "always",
+    "backgroundColor": "#1B2838",
+    "preferredContentMode": "mobile",
     "webView": {
       "allowsInlineMediaPlayback": true,
       "allowsAirPlayForMediaPlayback": true,
@@ -18,9 +19,19 @@
       "allowsLinkPreview": true,
       "scrollEnabled": true,
       "allowUniversalAccessFromFileURLs": true,
-      "limitsNavigationsToAppBoundDomains": true
+      "limitsNavigationsToAppBoundDomains": true,
+      "isOpaque": true,
+      "configuration": {
+        "allowsInlineMediaPlayback": true,
+        "suppressesIncrementalRendering": false
+      }
     },
-    "scheme": "capacitor"
+    "scheme": "capacitor",
+    "statusBar": {
+      "style": "dark",
+      "backgroundColor": "#1B2838",
+      "overlay": true
+    }
   },
   "android": {
     "backgroundColor": "#111827",
@@ -37,6 +48,11 @@
     },
     "SplashScreen": {
       "launchShowDuration": 0
+    },
+    "StatusBar": {
+      "style": "dark",
+      "backgroundColor": "#1B2838",
+      "overlay": true
     }
   }
 }

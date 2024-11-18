@@ -65,31 +65,33 @@ const handleBack = () => {
   <div v-if="chat" :class="['chat-area', platformClass]">
     <ChatHeader :chat="chat" :show-back-button="true" @back="handleBack" />
 
-    <div ref="messagesContainer" class="messages-container">
-      <!-- Empty State -->
-      <div v-if="!messages.length" class="empty-state">
-        <p>No messages yet. Start the conversation!</p>
-      </div>
+    <div class="chat-content">
+      <div ref="messagesContainer" class="messages-container">
+        <!-- Empty State -->
+        <div v-if="!messages.length" class="empty-state">
+          <p>No messages yet. Start the conversation!</p>
+        </div>
 
-      <!-- Messages -->
-      <div v-else class="messages-wrapper">
-        <BaseMessage
-          v-for="message in messages"
-          :key="message.id"
-          :content="message.content"
-          :timestamp="message.time"
-          :is-outgoing="message.sender === currentUserId"
-          :status="message.status"
-        />
+        <!-- Messages -->
+        <div v-else class="messages-wrapper">
+          <BaseMessage
+            v-for="message in messages"
+            :key="message.id"
+            :content="message.content"
+            :timestamp="message.time"
+            :is-outgoing="message.sender === currentUserId"
+            :status="message.status"
+          />
 
-        <!-- Typing Indicator -->
-        <div v-if="isTyping" class="typing-indicator" role="status">
-          <div class="typing-dots">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
+          <!-- Typing Indicator -->
+          <div v-if="isTyping" class="typing-indicator" role="status">
+            <div class="typing-dots">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+            <span>{{ chat.name }} is typing...</span>
           </div>
-          <span>{{ chat.name }} is typing...</span>
         </div>
       </div>
     </div>
@@ -102,13 +104,20 @@ const handleBack = () => {
 .chat-area {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background-color: var(--color-background);
+  height: 100vh; /* Change to 100vh */
   color: var(--color-text);
+}
+
+.chat-content {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden; /* Add this */
 }
 
 .messages-container {
   flex: 1;
+  height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
@@ -186,27 +195,10 @@ const handleBack = () => {
 
 /* Chat Input Section */
 .chat-input {
-  flex-shrink: 0;
-  border-top: 1px solid var(--color-border);
   background-color: var(--color-background);
-  position: relative;
-  z-index: var(--z-sticky);
 }
 
 /* Platform Specific Styles */
-.ios {
-  --safe-area-top: env(safe-area-inset-top);
-  --safe-area-bottom: env(safe-area-inset-bottom);
-}
-
-.ios .messages-container {
-  padding-top: var(--safe-area-top);
-}
-
-.ios .chat-input {
-  padding-bottom: var(--safe-area-bottom);
-}
-
 .android .messages-container {
   padding-top: var(--spacing-2);
 }

@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed } from "vue";
-import { Search, Settings } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { Search, Settings } from 'lucide-vue-next';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -35,20 +35,17 @@ const goToSettings = () => {
 };
 </script>
 
+
 <template>
   <div :class="['chat-list-container', platformClass]">
     <!-- Header Section -->
     <div class="header">
       <div class="header-content">
-        <!-- User Profile Section -->
-        <div class="user-profile">
-          <div class="user-info">
-            <h1 class="header-title">Messages</h1>
-            <p class="user-email">{{ currentUser.email }}</p>
-          </div>
+        <div class="user-info">
+          <h1 class="header-title">Messages</h1>
+          <p class="user-email">{{ currentUser.email }}</p>
         </div>
 
-        <!-- Settings Button -->
         <button
           class="settings-button"
           @click="goToSettings"
@@ -81,7 +78,7 @@ const goToSettings = () => {
       >
         <!-- Avatar -->
         <div class="avatar-wrapper">
-          <img :src="chat.avatar" class="avatar" />
+          <img :src="chat.avatar" class="avatar" alt="User avatar" />
           <div v-if="chat.online" class="online-indicator" aria-hidden="true" />
         </div>
 
@@ -96,7 +93,7 @@ const goToSettings = () => {
 
         <!-- Unread Badge -->
         <div v-if="chat.unreadCount" class="unread-badge" role="status">
-          <span>{{ chat.unreadCount }}</span>
+          {{ chat.unreadCount }}
         </div>
       </button>
     </div>
@@ -112,68 +109,49 @@ const goToSettings = () => {
 .chat-list-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background-color: var(--color-background);
 }
 
 /* Header Styles */
 .header {
   padding: var(--spacing-4);
-  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--spacing-3);
 }
 
 .header-content {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: var(--spacing-4);
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-4);
-}
-
-.user-info {
-  display: flex;
-  flex-direction: column;
+  margin-bottom: var(--spacing-3);
 }
 
 .header-title {
-  font-size: var(--font-size-xl);
-  font-weight: 600;
+  font-size: 32px;
+  font-weight: 700;
   color: var(--color-text);
+  margin-bottom: 4px;
 }
 
 .user-email {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   color: var(--color-text-secondary);
 }
 
 .settings-button {
   padding: var(--spacing-2);
-  border-radius: var(--radius-full);
+  margin-top: var(--spacing-2);
+  color: var(--color-text);
   background: transparent;
   border: none;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: background-color var(--transition-fast);
-}
-
-.settings-button:hover {
-  background-color: var(--color-surface);
 }
 
 .icon-settings {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 /* Search Section */
 .search-wrapper {
   position: relative;
-  margin-top: var(--spacing-2);
 }
 
 .search-icon {
@@ -188,12 +166,12 @@ const goToSettings = () => {
 
 .search-input {
   width: 100%;
-  padding: var(--spacing-3) var(--spacing-4) var(--spacing-3) var(--spacing-8);
+  padding: 12px var(--spacing-4) 12px 38px;
   background-color: var(--color-surface);
   border: none;
-  border-radius: var(--platform-radius);
+  border-radius: 10px;
   color: var(--color-text);
-  font-size: var(--font-size-base);
+  font-size: 17px;
 }
 
 .search-input::placeholder {
@@ -202,14 +180,13 @@ const goToSettings = () => {
 
 .search-input:focus {
   outline: none;
-  background-color: var(--color-surface-light);
 }
 
 /* Chat List */
 .chat-list {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-2) 0;
+  margin-top: var(--spacing-2);
 }
 
 .chat-item {
@@ -222,19 +199,9 @@ const goToSettings = () => {
   border: none;
   color: var(--color-text);
   text-align: left;
-  cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
-.chat-item:hover {
-  background-color: var(--color-surface);
-}
-
-.chat-item.selected {
-  background-color: var(--color-surface-light);
-}
-
-/* Avatar styles... */
+/* Avatar styles */
 .avatar-wrapper {
   position: relative;
   flex-shrink: 0;
@@ -245,16 +212,17 @@ const goToSettings = () => {
   height: 3rem;
   border-radius: var(--radius-full);
   object-fit: cover;
+  background-color: var(--color-surface);
 }
 
 .online-indicator {
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 12px;
+  height: 12px;
   background-color: var(--color-success);
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   border: 2px solid var(--color-background);
 }
 
@@ -268,25 +236,23 @@ const goToSettings = () => {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: var(--spacing-1);
+  margin-bottom: 2px;
 }
 
 .chat-name {
+  font-size: 17px;
   font-weight: 500;
   color: var(--color-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .chat-time {
-  font-size: var(--font-size-xs);
+  font-size: 15px;
   color: var(--color-text-secondary);
   flex-shrink: 0;
 }
 
 .chat-message {
-  font-size: var(--font-size-sm);
+  font-size: 15px;
   color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
@@ -295,86 +261,37 @@ const goToSettings = () => {
 
 /* Unread Badge */
 .unread-badge {
-  flex-shrink: 0;
-  background-color: var(--platform-primary);
-  color: white;
-  font-size: var(--font-size-xs);
-  font-weight: 500;
-  min-width: 1.5rem;
-  height: 1.5rem;
-  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--spacing-2);
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background-color: #007AFF;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
 }
 
 /* New Chat Button */
 .new-chat-container {
-  padding: var(--spacing-4);
+  padding: 16px;
 }
 
 .new-chat-button {
   width: 100%;
-  padding: var(--spacing-3);
-  background-color: var(--platform-primary);
+  padding: 16px;
+  background-color: #007AFF;
   color: white;
   border: none;
-  border-radius: var(--platform-radius);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color var(--transition-fast);
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
 }
 
-.new-chat-button:hover {
-  opacity: 0.9;
-}
 
-/* Platform Specific Styles */
-.ios .header {
-  padding-top: calc(var(--spacing-4) + var(--safe-area-inset-top));
-}
 
-.ios .new-chat-container {
-  padding-bottom: calc(var(--spacing-4) + var(--safe-area-inset-bottom));
-}
-
-.android .chat-item {
-  position: relative;
-  overflow: hidden;
-}
-
-.android .chat-item::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-color: currentColor;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.android .chat-item:active::after {
-  opacity: 0.1;
-}
-
-/* Scroll Optimizations */
-.chat-list {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
-}
-
-.chat-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.chat-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.chat-list::-webkit-scrollbar-thumb {
-  background-color: var(--color-border);
-  border-radius: var(--radius-sm);
-}
 
 /* Touch Optimizations */
 @media (hover: none) {
@@ -387,22 +304,5 @@ const goToSettings = () => {
   .search-input {
     font-size: 16px;
   }
-}
-
-/* Animations */
-@keyframes badge-pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.unread-badge {
-  animation: badge-pulse 2s infinite;
 }
 </style>
