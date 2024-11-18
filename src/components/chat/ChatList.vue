@@ -78,7 +78,7 @@ const goToSettings = () => {
       >
         <!-- Avatar -->
         <div class="avatar-wrapper">
-          <img :src="chat.avatar" class="avatar" alt="User avatar" />
+          <img :src="chat.avatar" class="avatar"/>
           <div v-if="chat.online" class="online-indicator" aria-hidden="true" />
         </div>
 
@@ -125,7 +125,7 @@ const goToSettings = () => {
 }
 
 .header-title {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--color-text);
   margin-bottom: 4px;

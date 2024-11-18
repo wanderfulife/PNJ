@@ -1,8 +1,7 @@
 ------------------------------------------------------------
 
-##### ui clean sur all devices / cadrage ui sur tous les devices ######
-se referer a la taille de la const pour le css des enfants --> varaible globale
-ADAPTABILITE EN FONCTION DE LA SIZE DU DEVICE 
+ADAPTABILITE EN FONCTION DE LA SIZE DU DEVICE  --> a checker sur plus de device 
+fix Settings.view
 
 -------------------------------------------------------------
 CLEANAGE SUR LES COULEURS, COMPONENTS, GLOBALES

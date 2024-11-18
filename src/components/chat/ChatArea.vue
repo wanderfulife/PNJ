@@ -67,12 +67,10 @@ const handleBack = () => {
 
     <div class="chat-content">
       <div ref="messagesContainer" class="messages-container">
-        <!-- Empty State -->
         <div v-if="!messages.length" class="empty-state">
           <p>No messages yet. Start the conversation!</p>
         </div>
 
-        <!-- Messages -->
         <div v-else class="messages-wrapper">
           <BaseMessage
             v-for="message in messages"
@@ -83,7 +81,6 @@ const handleBack = () => {
             :status="message.status"
           />
 
-          <!-- Typing Indicator -->
           <div v-if="isTyping" class="typing-indicator" role="status">
             <div class="typing-dots">
               <div class="typing-dot"></div>
@@ -104,50 +101,63 @@ const handleBack = () => {
 .chat-area {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Change to 100vh */
+  height: 100vh;
+  background-color: var(--color-background);
   color: var(--color-text);
 }
 
 .chat-content {
+  position: relative;
   flex: 1;
   min-height: 0;
-  position: relative;
-  overflow: hidden; /* Add this */
+  display: flex;
+  flex-direction: column;
 }
 
 .messages-container {
   flex: 1;
-  height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   position: relative;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border) transparent;
-}
-
-.messages-container::-webkit-scrollbar {
-  width: 4px;
-}
-
-.messages-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.messages-container::-webkit-scrollbar-thumb {
-  background-color: var(--color-border);
-  border-radius: var(--platform-radius);
 }
 
 .messages-wrapper {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  padding: var(--spacing-4) 0;
+  padding: var(--spacing-4);
   gap: var(--spacing-2);
+  min-height: 100%;
 }
 
-/* Empty State */
+/* Web-specific styles */
+@media (min-width: 768px) {
+  .chat-area {
+    height: 100vh;
+  }
+
+  .chat-content {
+    height: calc(100vh - 116px); /* Header (56px) + Input (60px) */
+  }
+
+  .messages-container {
+    height: 100%;
+    padding: 1rem 0;
+  }
+}
+
+/* Mobile-specific styles */
+@media (max-width: 767px) {
+  .chat-area {
+    height: 100%;
+  }
+
+  .messages-container {
+    height: auto;
+  }
+}
+
 .empty-state {
   display: flex;
   align-items: center;
@@ -159,7 +169,6 @@ const handleBack = () => {
   text-align: center;
 }
 
-/* Typing Indicator */
 .typing-indicator {
   display: flex;
   align-items: center;
@@ -186,21 +195,33 @@ const handleBack = () => {
 .typing-dot:nth-child(1) {
   animation: bounce 1s infinite 0.1s;
 }
+
 .typing-dot:nth-child(2) {
   animation: bounce 1s infinite 0.2s;
 }
+
 .typing-dot:nth-child(3) {
   animation: bounce 1s infinite 0.3s;
 }
 
-/* Chat Input Section */
 .chat-input {
+  flex-shrink: 0;
   background-color: var(--color-background);
+  border-top: 1px solid var(--color-border);
 }
 
-/* Platform Specific Styles */
-.android .messages-container {
-  padding-top: var(--spacing-2);
+/* Scrollbar styles */
+.messages-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: var(--platform-radius);
 }
 
 /* Animations */
@@ -225,6 +246,11 @@ const handleBack = () => {
   }
 }
 
+/* Platform Specific Styles */
+.android .messages-container {
+  padding-top: var(--spacing-2);
+}
+
 /* Touch Optimizations */
 @media (hover: none) {
   .chat-area {
@@ -236,48 +262,5 @@ const handleBack = () => {
 /* High Performance Rendering */
 .messages-wrapper > * {
   will-change: transform, opacity;
-}
-
-/* Focus Management */
-:focus {
-  outline: none;
-}
-
-:focus-visible {
-  outline: 2px solid var(--platform-primary);
-  outline-offset: 2px;
-}
-
-/* Error States */
-.error-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-4);
-  color: var(--color-error);
-  text-align: center;
-}
-
-/* Loading States */
-.loading-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-4);
-}
-
-.loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--platform-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>

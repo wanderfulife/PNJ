@@ -39,7 +39,6 @@ const handleBack = () => {
       <div class="avatar-container">
         <img
           :src="chat.avatar"
-          :alt="`${chat.name}'s avatar`"
           class="avatar"
         />
         <div 
