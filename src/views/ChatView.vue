@@ -76,7 +76,7 @@ onUnmounted(() => {
 
 <template>
   <div :class="['chat-view', platformClass]">
-    <!-- Chat List (Desktop & Mobile) -->
+    <!-- Chat List -->
     <div 
       class="chat-list-view"
       :class="{ 
@@ -92,7 +92,7 @@ onUnmounted(() => {
       />
     </div>
 
-    <!-- Chat Area (Desktop) -->
+    <!-- Chat Area -->
     <div 
       v-if="!isMobile"
       class="chat-area-desktop"
@@ -113,7 +113,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Chat Area (Mobile Modal) -->
+    <!-- Mobile Chat Area (Unchanged) -->
     <div 
       v-if="isMobile"
       class="chat-area-mobile"
@@ -138,13 +138,38 @@ onUnmounted(() => {
 /* Base Layout */
 .chat-view {
   display: flex;
-  height: 100%;
-  min-height: 100vh;
+  height: 100vh;
   background-color: #111827;
   overflow: hidden;
 }
 
-/* List View */
+/* Chat List - Web Version */
+@media (min-width: 768px) {
+  .chat-list-view.desktop {
+    width: 30%;
+    max-width: 420px;
+    min-width: 300px;
+    border-right: 1px solid #1F2937;
+    background-color: #0F1623;
+  }
+
+  .chat-area-desktop {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #111827;
+    position: relative;
+  }
+
+  .chat-area-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+}
+
+/* Mobile Chat List (Unchanged) */
 .chat-list-view {
   flex-shrink: 0;
   width: 100%;
@@ -153,54 +178,7 @@ onUnmounted(() => {
   transition: transform 0.3s ease-in-out;
 }
 
-.chat-list-view.desktop {
-  width: 360px;
-  border-right: 1px solid #1F2937;
-}
-
-/* Desktop Chat Area */
-.chat-area-desktop {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background-color: #111827;
-  overflow: hidden;
-}
-
-.chat-area-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Empty State */
-.empty-state {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #111827;
-  padding: 2rem;
-}
-
-.empty-state-content {
-  text-align: center;
-  color: #9CA3AF;
-}
-
-.empty-state-content h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #fff;
-}
-
-.empty-state-content p {
-  font-size: 1rem;
-  color: #6B7280;
-}
-
-/* Mobile Chat Area */
+/* Mobile Chat Area (Unchanged) */
 .chat-area-mobile {
   position: fixed;
   inset: 0;
@@ -220,21 +198,47 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-/* Mobile List View Hidden State */
+/* Empty State */
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.empty-state-content {
+  text-align: center;
+  color: #9CA3AF;
+}
+
+.empty-state-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #E5E7EB;
+}
+
+.empty-state-content p {
+  font-size: 1rem;
+  color: #6B7280;
+}
+
+/* Mobile List View Hidden State (Unchanged) */
 @media (max-width: 767px) {
   .chat-list-view.hidden {
     transform: translateX(-100%);
   }
 }
 
-/* Platform Specific Styles */
+/* Platform Specific Styles (Unchanged) */
 .ios {
   height: 100%;
   min-height: -webkit-fill-available;
   padding-bottom: var(--safe-area-inset-bottom);
 }
 
-/* Animations */
+/* Animations (Unchanged) */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -245,7 +249,7 @@ onUnmounted(() => {
   to { transform: translateX(0); }
 }
 
-/* Touch Optimization */
+/* Touch Optimization (Unchanged) */
 @media (hover: none) {
   * {
     touch-action: manipulation;
@@ -253,49 +257,19 @@ onUnmounted(() => {
   }
 }
 
-/* High-Performance Animations */
-.chat-area-mobile {
-  will-change: transform, opacity;
-}
-
-/* Scrolling Behavior */
-* {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-}
-
-/* Desktop Enhancements */
-@media (min-width: 768px) {
-  .chat-view {
-    max-width: 1440px;
-    margin: 0 auto;
-    height: 100vh;
-    position: relative;
-  }
-  
-  .chat-list-view.desktop {
-    border-right: 1px solid #1F2937;
-    background-color: #0F1623;
-  }
-  
-  .chat-area-desktop {
-    background: linear-gradient(to bottom, #111827, #0F1623);
-  }
-}
-
-/* Prevent Content Selection During Transitions */
+/* Prevent Content Selection During Transitions (Unchanged) */
 .chat-area-mobile.visible,
 .chat-area-mobile.hidden {
   user-select: none;
 }
 
-/* Loading States */
+/* Loading States (Unchanged) */
 .chat-view[data-loading="true"] {
   opacity: 0.7;
   pointer-events: none;
 }
 
-/* Focus States */
+/* Focus States (Unchanged) */
 :focus {
   outline: none;
 }
