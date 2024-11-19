@@ -372,21 +372,7 @@ const handleToggleSetting = async (key, value) => {
 }
 
 /* Platform Specific Styles */
-.ios {
-  & .settings-header {
-    padding-top: max(1rem, env(safe-area-inset-top));
-  }
-  
-  & .settings-scroll-container {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
 
-.android {
-  & .settings-header {
-    padding-top: max(1rem, env(safe-area-inset-top));
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .settings-view *,
