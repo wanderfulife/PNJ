@@ -131,6 +131,9 @@ const handleToggleSetting = async (key, value) => {
       <h1 class="header-title">Settings</h1>
     </header>
 
+    <!-- Container scrollable -->
+    <div class="settings-scroll-container">
+
     <!-- Main Content -->
     <main class="settings-content">
       <!-- Simple Profile Section -->
@@ -213,16 +216,19 @@ const handleToggleSetting = async (key, value) => {
       </button>
     </main>
   </div>
+  </div>
 </template>
 
 <style scoped>
 .settings-view {
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   background-color: var(--color-background, #1827);
   color: var(--color-text, #F3F4F6);
+  overflow: hidden;
 }
 
-/* Header Styles */
 .settings-header {
   position: sticky;
   top: 0;
@@ -230,7 +236,14 @@ const handleToggleSetting = async (key, value) => {
   display: flex;
   align-items: center;
   gap: 1rem;
+  padding: 1rem;
+  background-color: var(--color-background, #1827);
+  }
 
+.settings-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .header-button {
@@ -263,14 +276,12 @@ const handleToggleSetting = async (key, value) => {
   color: var(--color-text, #F3F4F6);
 }
 
-/* Content Area */
 .settings-content {
   max-width: 640px;
   margin: 0 auto;
   padding: 1rem;
 }
 
-/* Profile Section */
 .profile-section {
   display: flex;
   align-items: center;
@@ -316,7 +327,6 @@ const handleToggleSetting = async (key, value) => {
   margin: 0.25rem 0 0 0;
 }
 
-/* Logout Button */
 .logout-button {
   width: 100%;
   display: flex;
@@ -349,17 +359,6 @@ const handleToggleSetting = async (key, value) => {
   height: 1.5rem;
 }
 
-/* Platform Specific Styles */
-.ios {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.android {
-  padding-top: env(safe-area-inset-top);
-}
-
-/* Utilities */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -372,6 +371,23 @@ const handleToggleSetting = async (key, value) => {
   border: 0;
 }
 
+/* Platform Specific Styles */
+.ios {
+  & .settings-header {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  & .settings-scroll-container {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+.android {
+  & .settings-header {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .settings-view *,
   .settings-view *::before,
@@ -381,7 +397,6 @@ const handleToggleSetting = async (key, value) => {
   }
 }
 
-/* Responsive adjustments */
 @media (min-width: 640px) {
   .settings-content {
     padding: 2rem;
