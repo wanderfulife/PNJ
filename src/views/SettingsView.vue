@@ -230,7 +230,7 @@ const handleToggleSetting = async (key, value) => {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
+
 }
 
 .header-button {
@@ -267,7 +267,7 @@ const handleToggleSetting = async (key, value) => {
 .settings-content {
   max-width: 640px;
   margin: 0 auto;
-  padding: 1.5rem 1rem;
+  padding: 1rem;
 }
 
 /* Profile Section */
