@@ -12,7 +12,7 @@ const props = defineProps({
   error: {
     type: String,
     default: "",
-  },
+  }
 });
 
 const emit = defineEmits(["submit"]);
@@ -78,15 +78,13 @@ const toggleMode = () => {
         />
       </div>
 
-      <div v-if="error" class="error-message">
+      <div v-if="error" class="error-message" role="alert">
         {{ error }}
       </div>
 
       <button type="submit" :disabled="loading" class="submit-button">
-        <span v-if="loading" class="loading-spinner"></span>
-        <span v-else>
-          {{ isRegistering ? "Create Account" : "Sign In" }}
-        </span>
+        <span v-if="loading" class="loading-spinner" aria-hidden="true" />
+        <span>{{ isRegistering ? "Create Account" : "Sign In" }}</span>
       </button>
     </form>
 
@@ -119,12 +117,12 @@ const toggleMode = () => {
 .title {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #fff;
+  color: var(--color-text);
   margin-bottom: 0.5rem;
 }
 
 .subtitle {
-  color: #9CA3AF;
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
 }
 
@@ -143,23 +141,23 @@ const toggleMode = () => {
 .label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #9CA3AF;
+  color: var(--color-text-secondary);
 }
 
 .input {
   width: 100%;
   padding: 0.75rem 1rem;
-  background-color: #374151;
-  color: #fff;
-  border: none;
-  border-radius: 0.5rem;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--platform-radius);
   font-size: 1rem;
   transition: all 0.2s ease;
 }
 
 .input:focus {
-  outline: 2px solid #8B5CF6;
-  outline-offset: 2px;
+  border-color: var(--platform-primary);
+  outline: none;
 }
 
 .input:disabled {
@@ -168,116 +166,105 @@ const toggleMode = () => {
 }
 
 .error-message {
-  color: #EF4444;
+  color: var(--color-error);
   font-size: 0.875rem;
   text-align: center;
+  animation: shake 0.5s ease;
 }
 
 .submit-button {
   width: 100%;
   padding: 0.875rem;
-  background-color: #8B5CF6;
+  background-color: var(--platform-primary);
   color: white;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--platform-radius);
   font-weight: 500;
-  cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: background-color 0.2s;
-}
-
-.submit-button:hover:not(:disabled) {
-  background-color: #7C3AED;
+  gap: 0.5rem;
+  transition: opacity 0.2s;
 }
 
 .submit-button:disabled {
-  opacity: 0.5;
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
 .loading-spinner {
   width: 1rem;
   height: 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
+.toggle-container {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.toggle-button {
+  color: var(--platform-primary);
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.toggle-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Platform specific styles */
+.ios {
+  --form-radius: 10px;
+  
+  .input {
+    border-radius: var(--form-radius);
+  }
+  
+  .submit-button {
+    border-radius: var(--form-radius);
+    font-weight: 600;
+  }
+}
+
+.android {
+  --form-radius: 4px;
+  
+  .input {
+    border-radius: var(--form-radius);
+  }
+  
+  .submit-button {
+    border-radius: var(--form-radius);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .toggle-button {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+/* Animations */
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-.toggle-container {
-  text-align: center;
-  margin-top: 1.5rem;
-}
-
-.toggle-button {
-  color: #8B5CF6;
-  font-size: 0.875rem;
-  padding: 0.5rem 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.toggle-button:hover:not(:disabled) {
-  opacity: 0.8;
-}
-
-.toggle-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Platform specific styles */
-.ios {
-  --primary-color: #007AFF;
-  --input-bg: #1C1C1E;
-}
-
-.ios .input {
-  border-radius: 10px;
-  background-color: var(--input-bg);
-}
-
-.ios .submit-button {
-  background-color: var(--primary-color);
-  border-radius: 10px;
-  font-weight: 600;
-}
-
-.ios .toggle-button {
-  color: var(--primary-color);
-}
-
-.android {
-  --primary-color: #3DDC84;
-  --input-bg: #2C2C2C;
-}
-
-.android .input {
-  border-radius: 4px;
-  background-color: var(--input-bg);
-}
-
-.android .submit-button {
-  background-color: var(--primary-color);
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.android .toggle-button {
-  color: var(--primary-color);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
 /* Mobile optimizations */
@@ -288,16 +275,33 @@ const toggleMode = () => {
   
   .input,
   .submit-button {
-    font-size: 16px;
+    font-size: 16px; /* Prevent zoom on iOS */
   }
 }
 
-@supports (-webkit-touch-callout: none) {
+/* Touch optimizations */
+@media (hover: none) {
   .input,
   .submit-button,
   .toggle-button {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation: none;
+  }
+  
+  .error-message {
+    animation: none;
+  }
+  
+  .input,
+  .submit-button {
+    transition: none;
   }
 }
 </style>

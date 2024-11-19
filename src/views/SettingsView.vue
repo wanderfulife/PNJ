@@ -1,6 +1,5 @@
-<!-- views/SettingsView.vue -->
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/useAuthStore';
 import { useProfileStore } from '../stores/useProfileStore';
@@ -8,29 +7,23 @@ import {
   Bell,
   Shield,
   Key,
-  HelpCircle,
-  LogOut,
   ChevronLeft,
   Moon,
-  Share2,
-  Smartphone,
   Languages,
+  Smartphone,
   User
 } from 'lucide-vue-next';
 
-// Components
 import SettingsGroup from '../components/settings/SettingsGroup.vue';
 import SettingsItem from '../components/settings/SettingsItem.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const profileStore = useProfileStore();
-
-// Reactive state
 const isLoggingOut = ref(false);
 
-// Settings groups avec les toggles explicitement définis
-const notificationSettings = [
+// Memoized settings configurations
+const notificationSettings = computed(() => [
   {
     icon: Bell,
     title: 'Push Notifications',
@@ -47,9 +40,9 @@ const notificationSettings = [
     preferenceKey: 'messageSounds',
     route: null
   }
-];
+]);
 
-const privacySettings = [
+const privacySettings = computed(() => [
   {
     icon: Shield,
     title: 'Privacy Settings',
@@ -64,9 +57,9 @@ const privacySettings = [
     hasToggle: false,
     route: '/security'
   }
-];
+]);
 
-const applicationSettings = [
+const applicationSettings = computed(() => [
   {
     icon: Moon,
     title: 'Dark Mode',
@@ -89,11 +82,9 @@ const applicationSettings = [
     hasToggle: false,
     route: null
   }
-];
+]);
 
-const handleBack = () => {
-  router.push('/chat');
-};
+const handleBack = () => router.push('/chat');
 
 const handleLogout = async () => {
   if (isLoggingOut.value) return;
@@ -111,9 +102,7 @@ const handleLogout = async () => {
 
 const handleToggleSetting = async (key, value) => {
   try {
-    await profileStore.savePreferences({
-      [key]: value
-    });
+    await profileStore.savePreferences({ [key]: value });
   } catch (error) {
     console.error('Toggle setting error:', error);
   }
@@ -131,91 +120,77 @@ const handleToggleSetting = async (key, value) => {
       <h1 class="header-title">Settings</h1>
     </header>
 
-    <!-- Container scrollable -->
+    <!-- Scrollable Container -->
     <div class="settings-scroll-container">
+      <main class="settings-content">
+        <!-- Profile Section -->
+        <section class="profile-section">
+          <div class="profile-avatar">
+            <User class="profile-icon" aria-hidden="true" />
+          </div>
+          <div class="profile-info">
+            <h2 class="profile-name">
+              {{ authStore.user?.displayName || 'Student' }}
+            </h2>
+            <p class="profile-email">{{ authStore.user?.email }}</p>
+          </div>
+        </section>
 
-    <!-- Main Content -->
-    <main class="settings-content">
-      <!-- Simple Profile Section -->
-      <section class="profile-section">
-        <div class="profile-avatar">
-          <User class="profile-icon" aria-hidden="true" />
-        </div>
-        <div class="profile-info">
-          <h2 class="profile-name">
-            {{ authStore.user?.displayName || 'Student' }}
-          </h2>
-          <p class="profile-email">{{ authStore.user?.email }}</p>
-        </div>
-      </section>
+        <!-- Settings Groups -->
+        <SettingsGroup 
+          title="Notifications"
+          description="Manage message alerts and sounds"
+        >
+          <SettingsItem
+            v-for="item in notificationSettings"
+            :key="item.title"
+            v-bind="item"
+            :toggle-value="profileStore.preferences[item.preferenceKey]"
+            @toggle="handleToggleSetting(item.preferenceKey, $event)"
+          />
+        </SettingsGroup>
 
-      <!-- Settings Groups -->
-      <SettingsGroup 
-        title="Notifications"
-        description="Manage message alerts and sounds"
-      >
-        <SettingsItem
-          v-for="item in notificationSettings"
-          :key="item.title"
-          :icon="item.icon"
-          :title="item.title"
-          :description="item.description"
-          :has-toggle="item.hasToggle"
-          :toggle-value="profileStore.preferences[item.preferenceKey]"
-          :route="item.route"
-          @toggle="handleToggleSetting(item.preferenceKey, $event)"
-        />
-      </SettingsGroup>
+        <SettingsGroup
+          title="Privacy & Security"
+          description="Control your data and privacy settings"
+        >
+          <SettingsItem
+            v-for="item in privacySettings"
+            :key="item.title"
+            v-bind="item"
+            @click="router.push(item.route)"
+          />
+        </SettingsGroup>
 
-      <SettingsGroup
-        title="Privacy & Security"
-        description="Control your data and privacy settings"
-      >
-        <SettingsItem
-          v-for="item in privacySettings"
-          :key="item.title"
-          :icon="item.icon"
-          :title="item.title"
-          :description="item.description"
-          :has-toggle="item.hasToggle"
-          :route="item.route"
-          @click="router.push(item.route)"
-        />
-      </SettingsGroup>
+        <SettingsGroup
+          title="Application"
+          description="General app settings"
+        >
+          <SettingsItem
+            v-for="item in applicationSettings"
+            :key="item.title"
+            v-bind="item"
+            :toggle-value="item.hasToggle ? profileStore.preferences[item.preferenceKey] : undefined"
+            @toggle="item.hasToggle && handleToggleSetting(item.preferenceKey, $event)"
+            @click="item.route && router.push(item.route)"
+          />
+        </SettingsGroup>
 
-      <SettingsGroup
-        title="Application"
-        description="General app settings"
-      >
-        <SettingsItem
-          v-for="item in applicationSettings"
-          :key="item.title"
-          :icon="item.icon"
-          :title="item.title"
-          :description="item.description"
-          :has-toggle="item.hasToggle"
-          :toggle-value="item.hasToggle ? profileStore.preferences[item.preferenceKey] : undefined"
-          :route="item.route"
-          @toggle="item.hasToggle && handleToggleSetting(item.preferenceKey, $event)"
-          @click="item.route && router.push(item.route)"
-        />
-      </SettingsGroup>
-
-      <!-- Logout Button -->
-      <button
-        class="logout-button"
-        :disabled="isLoggingOut"
-        @click="handleLogout"
-      >
-        <LogOut
-          class="icon"
-          :class="{ 'animate-spin': isLoggingOut }"
-          aria-hidden="true"
-        />
-        <span>{{ isLoggingOut ? 'Logging out...' : 'Log Out' }}</span>
-      </button>
-    </main>
-  </div>
+        <!-- Logout Button -->
+        <button
+          class="logout-button"
+          :disabled="isLoggingOut"
+          @click="handleLogout"
+        >
+          <User
+            class="icon"
+            :class="{ 'animate-spin': isLoggingOut }"
+            aria-hidden="true"
+          />
+          <span>{{ isLoggingOut ? 'Logging out...' : 'Log Out' }}</span>
+        </button>
+      </main>
+    </div>
   </div>
 </template>
 
@@ -224,8 +199,8 @@ const handleToggleSetting = async (key, value) => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-background, #1827);
-  color: var(--color-text, #F3F4F6);
+  background-color: var(--color-background);
+  color: var(--color-text);
   overflow: hidden;
 }
 
@@ -237,8 +212,8 @@ const handleToggleSetting = async (key, value) => {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background-color: var(--color-background, #1827);
-  }
+  background-color: var(--color-background);
+}
 
 .settings-scroll-container {
   flex: 1;
@@ -246,6 +221,13 @@ const handleToggleSetting = async (key, value) => {
   -webkit-overflow-scrolling: touch;
 }
 
+.settings-content {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Header styles */
 .header-button {
   display: flex;
   align-items: center;
@@ -256,13 +238,12 @@ const handleToggleSetting = async (key, value) => {
   border: none;
   border-radius: 9999px;
   background-color: transparent;
-  color: var(--color-text, #F3F4F6);
-  cursor: pointer;
+  color: var(--color-text);
   transition: background-color 0.2s;
 }
 
 .header-button:hover {
-  background-color: var(--color-surface-light, #374151);
+  background-color: var(--color-surface-light);
 }
 
 .header-icon {
@@ -273,22 +254,17 @@ const handleToggleSetting = async (key, value) => {
 .header-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--color-text, #F3F4F6);
+  color: var(--color-text);
 }
 
-.settings-content {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
+/* Profile section */
 .profile-section {
   display: flex;
   align-items: center;
   gap: 1.5rem;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  background-color: var(--color-surface, #1F2937);
+  background-color: var(--color-surface);
   border-radius: 1rem;
 }
 
@@ -298,7 +274,7 @@ const handleToggleSetting = async (key, value) => {
   justify-content: center;
   width: 3.5rem;
   height: 3.5rem;
-  background-color: var(--color-primary, #7C3AED);
+  background-color: var(--color-primary);
   border-radius: 9999px;
   flex-shrink: 0;
 }
@@ -317,16 +293,17 @@ const handleToggleSetting = async (key, value) => {
 .profile-name {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--color-text, #F3F4F6);
+  color: var(--color-text);
   margin: 0;
 }
 
 .profile-email {
-  color: var(--color-text-secondary, #9CA3AF);
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
-  margin: 0.25rem 0 0 0;
+  margin-top: 0.25rem;
 }
 
+/* Logout button */
 .logout-button {
   width: 100%;
   display: flex;
@@ -335,17 +312,16 @@ const handleToggleSetting = async (key, value) => {
   gap: 0.5rem;
   padding: 1rem;
   margin-top: 2rem;
-  background-color: var(--color-surface, #1F2937);
+  background-color: var(--color-surface);
   border: none;
   border-radius: 0.75rem;
-  color: var(--color-error, #EF4444);
+  color: var(--color-error);
   font-weight: 500;
-  cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .logout-button:hover:not(:disabled) {
-  background-color: var(--color-surface-light, #374151);
+  background-color: var(--color-surface-light);
   transform: translateY(-1px);
 }
 
@@ -371,18 +347,6 @@ const handleToggleSetting = async (key, value) => {
   border: 0;
 }
 
-/* Platform Specific Styles */
-
-
-@media (prefers-reduced-motion: reduce) {
-  .settings-view *,
-  .settings-view *::before,
-  .settings-view *::after {
-    transition: none !important;
-    animation: none !important;
-  }
-}
-
 @media (min-width: 640px) {
   .settings-content {
     padding: 2rem;
@@ -390,6 +354,15 @@ const handleToggleSetting = async (key, value) => {
   
   .profile-section {
     padding: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-view *,
+  .settings-view *::before,
+  .settings-view *::after {
+    transition: none !important;
+    animation: none !important;
   }
 }
 </style>

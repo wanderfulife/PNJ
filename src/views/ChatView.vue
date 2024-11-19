@@ -1,281 +1,244 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import ChatList from '../components/chat/ChatList.vue'
-import ChatArea from '../components/chat/ChatArea.vue'
-import { useChatStore } from '../stores/useChatStore'
-import { useAuthStore } from '../stores/useAuthStore'
-import { storeToRefs } from 'pinia'
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import ChatList from '../components/chat/ChatList.vue';
+import ChatArea from '../components/chat/ChatArea.vue';
+import { useChatStore } from '../stores/useChatStore';
+import { useAuthStore } from '../stores/useAuthStore';
+import { storeToRefs } from 'pinia';
 
-// Store initialization
-const chatStore = useChatStore()
-const authStore = useAuthStore()
-const { chats, selectedChat } = storeToRefs(chatStore)
-const { user } = storeToRefs(authStore)
+// Store initialization with storeToRefs for better reactivity
+const chatStore = useChatStore();
+const authStore = useAuthStore();
+const { chats, selectedChat } = storeToRefs(chatStore);
+const { user } = storeToRefs(authStore);
 
 // Reactive state
-const isMobile = ref(window.innerWidth < 768)
-const showChatView = ref(false)
-const isTyping = ref(false)
-const platformClass = computed(() => authStore.platform?.toLowerCase())
+const isMobile = ref(window.innerWidth < 768);
+const showChatView = ref(false);
+const isTyping = ref(false);
 
-// Methods
+// Computed properties
+const platformClass = computed(() => authStore.platform?.toLowerCase());
+const shouldShowChatArea = computed(() => !isMobile.value || showChatView.value);
+const shouldShowChatList = computed(() => !isMobile.value || !showChatView.value);
+
+// Resize handler with debounce
+let resizeTimeout;
 const handleResize = () => {
-  isMobile.value = window.innerWidth < 768
-}
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    isMobile.value = window.innerWidth < 768;
+    updateViewportHeight();
+  }, 150); // Debounce resize events
+};
 
+// View height handler for mobile
+const updateViewportHeight = () => {
+  document.documentElement.style.setProperty(
+    '--viewport-height',
+    `${window.innerHeight}px`
+  );
+};
+
+// Chat handlers
 const handleChatSelect = (chat) => {
-  chatStore.selectChat(chat.id)
+  chatStore.selectChat(chat.id);
   if (isMobile.value) {
-    showChatView.value = true
+    showChatView.value = true;
   }
-}
+};
 
 const handleBack = () => {
-  showChatView.value = false
-  setTimeout(() => {
-    chatStore.selectChat(null)
-  }, 300)
-}
+  showChatView.value = false;
+  // Use RAF to ensure smooth transition
+  requestAnimationFrame(() => {
+    chatStore.selectChat(null);
+  });
+};
 
 const handleSendMessage = async (message) => {
-  if (!selectedChat.value || !message.trim()) return
+  if (!selectedChat.value || !message.trim()) return;
   
-  await chatStore.sendMessage(selectedChat.value.id, message)
+  await chatStore.sendMessage(selectedChat.value.id, message);
 
-  // Simulate response for demo
+  // Demo response simulation
   if (selectedChat.value.id === 1) {
-    isTyping.value = true
+    isTyping.value = true;
     setTimeout(() => {
-      isTyping.value = false
-      chatStore.sendMessage(selectedChat.value.id, "Got your message! 👍")
-    }, 2000)
+      isTyping.value = false;
+      chatStore.sendMessage(selectedChat.value.id, "Got your message! 👍");
+    }, 2000);
   }
-}
+};
 
 // Lifecycle hooks
 onMounted(() => {
-  window.addEventListener('resize', handleResize)
-  handleResize()
-  chatStore.initializeChats()
-
-  const updateViewportHeight = () => {
-    document.documentElement.style.setProperty(
-      '--viewport-height',
-      `${window.innerHeight}px`
-    )
-  }
-  
-  window.addEventListener('resize', updateViewportHeight)
-  updateViewportHeight()
-})
+  window.addEventListener('resize', handleResize);
+  handleResize();
+  chatStore.initializeChats();
+  updateViewportHeight();
+});
 
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-})
+  window.removeEventListener('resize', handleResize);
+  clearTimeout(resizeTimeout);
+});
 </script>
 
 <template>
   <div :class="['chat-view', platformClass]">
     <!-- Chat List -->
-    <div 
-      class="chat-list-view"
-      :class="{ 
-        'hidden': isMobile && showChatView,
-        'desktop': !isMobile 
-      }"
-    >
-      <ChatList
-        :chats="chats"
-        :selected-chat="selectedChat"
-        :current-user="user"
-        @select-chat="handleChatSelect"
-      />
-    </div>
+    <Transition name="slide-list">
+      <div 
+        v-show="shouldShowChatList"
+        class="chat-list-container"
+      >
+        <ChatList
+          :chats="chats"
+          :selected-chat="selectedChat"
+          :current-user="user"
+          @select-chat="handleChatSelect"
+        />
+      </div>
+    </Transition>
 
-    <!-- Chat Area -->
-    <div 
-      v-if="!isMobile"
-      class="chat-area-desktop"
-    >
-      <div v-if="selectedChat" class="chat-area-content">
+    <!-- Desktop Chat Area -->
+    <Transition name="fade">
+      <div 
+        v-if="!isMobile"
+        class="chat-area-desktop"
+      >
+        <template v-if="selectedChat">
+          <ChatArea
+            :chat="selectedChat"
+            :current-user-id="user?.uid"
+            :is-typing="isTyping"
+            @send="handleSendMessage"
+          />
+        </template>
+        <div v-else class="empty-state">
+          <div class="empty-state-content">
+            <h2>Select a conversation</h2>
+            <p>Choose a chat from the list to start messaging</p>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Mobile Chat Area -->
+    <Transition name="slide-chat">
+      <div 
+        v-if="isMobile && shouldShowChatArea"
+        class="chat-area-mobile"
+      >
         <ChatArea
+          v-if="selectedChat"
           :chat="selectedChat"
           :current-user-id="user?.uid"
           :is-typing="isTyping"
+          @back="handleBack"
           @send="handleSendMessage"
         />
       </div>
-      <div v-else class="empty-state">
-        <div class="empty-state-content">
-          <h2>Select a conversation</h2>
-          <p>Choose a chat from the list to start messaging</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mobile Chat Area (Unchanged) -->
-    <div 
-      v-if="isMobile"
-      class="chat-area-mobile"
-      :class="{ 
-        'visible': showChatView,
-        'hidden': !showChatView 
-      }"
-    >
-      <ChatArea
-        v-if="selectedChat"
-        :chat="selectedChat"
-        :current-user-id="user?.uid"
-        :is-typing="isTyping"
-        @back="handleBack"
-        @send="handleSendMessage"
-      />
-    </div>
+    </Transition>
   </div>
 </template>
 
 <style scoped>
-/* Base Layout */
-.chat-view {
-  display: flex;
-  height: 100vh;
-  background-color: #111827;
-  overflow: hidden;
+/* ... previous styles remain the same until transitions ... */
+
+/* Improved Transitions */
+/* List transitions - slides left */
+.slide-list-enter-active,
+.slide-list-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Chat List - Web Version */
-@media (min-width: 768px) {
-  .chat-list-view.desktop {
-    width: 30%;
-    max-width: 420px;
-    min-width: 300px;
-    border-right: 1px solid #1F2937;
-    background-color: #0F1623;
-  }
-
-  .chat-area-desktop {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: #111827;
-    position: relative;
-  }
-
-  .chat-area-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
+.slide-list-enter-from {
+  transform: translateX(-100%);
 }
 
-/* Mobile Chat List (Unchanged) */
-.chat-list-view {
-  flex-shrink: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #111827;
-  transition: transform 0.3s ease-in-out;
+.slide-list-leave-to {
+  transform: translateX(-100%);
 }
 
-/* Mobile Chat Area (Unchanged) */
+/* Chat transitions - slides from right */
+.slide-chat-enter-active,
+.slide-chat-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-chat-enter-from {
+  transform: translateX(100%);
+}
+
+.slide-chat-leave-to {
+  transform: translateX(100%);
+}
+
+/* Fade transition for desktop */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Mobile View Positioning */
 .chat-area-mobile {
   position: fixed;
   inset: 0;
-  background-color: #111827;
+  background-color: var(--color-background);
   z-index: 50;
-  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  /* Add transform-origin for smoother animations */
+  transform-origin: right center;
+  overflow: hidden;
 }
 
-.chat-area-mobile.hidden {
-  transform: translateX(100%);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.chat-area-mobile.visible {
-  transform: translateX(0);
-  opacity: 1;
-}
-
-/* Empty State */
-.empty-state {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-
-.empty-state-content {
-  text-align: center;
-  color: #9CA3AF;
-}
-
-.empty-state-content h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #E5E7EB;
-}
-
-.empty-state-content p {
-  font-size: 1rem;
-  color: #6B7280;
-}
-
-/* Mobile List View Hidden State (Unchanged) */
-@media (max-width: 767px) {
-  .chat-list-view.hidden {
-    transform: translateX(-100%);
+.chat-list-container {
+  position: relative;
+  /* Add transform-origin for smoother animations */
+  transform-origin: left center;
+  
+  @media (min-width: 768px) {
+    position: sticky;
+    top: 0;
   }
 }
 
-/* Platform Specific Styles (Unchanged) */
-.ios {
-  height: 100%;
-  min-height: -webkit-fill-available;
-  padding-bottom: var(--safe-area-inset-bottom);
+/* High Performance Hints */
+.chat-area-mobile,
+.chat-list-container {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000;
+  -webkit-perspective: 1000;
 }
 
-/* Animations (Unchanged) */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-
-/* Touch Optimization (Unchanged) */
-@media (hover: none) {
-  * {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .slide-list-enter-active,
+  .slide-list-leave-active,
+  .slide-chat-enter-active,
+  .slide-chat-leave-active,
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: none;
   }
 }
 
-/* Prevent Content Selection During Transitions (Unchanged) */
-.chat-area-mobile.visible,
-.chat-area-mobile.hidden {
-  user-select: none;
+/* Prevent Content Shifting */
+.chat-view {
+  position: relative;
+  isolation: isolate;
 }
 
-/* Loading States (Unchanged) */
-.chat-view[data-loading="true"] {
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-/* Focus States (Unchanged) */
-:focus {
-  outline: none;
-}
-
-:focus-visible {
-  outline: 2px solid #7C3AED;
-  outline-offset: 2px;
+/* Prevent Scrolling When Transitioning */
+.chat-view.transitioning {
+  overflow: hidden;
 }
 </style>

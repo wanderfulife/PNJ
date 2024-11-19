@@ -26,8 +26,9 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
 <template>
   <div 
     :class="['login-view', platformClass]"
-    :style="{ minHeight: `${screenHeight}px` }">
-    <div  />
+    :style="{ minHeight: `${screenHeight}px` }"
+  >
+    <div class="safe-area-top" />
 
     <main class="login-content">
       <LoginForm
@@ -45,6 +46,7 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
 .login-view {
   display: flex;
   flex-direction: column;
+  background-color: var(--color-background);
 }
 
 .login-content {
@@ -57,40 +59,13 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
   gap: var(--spacing-8);
 }
 
-.brand {
-  text-align: center;
-  animation: fadeIn var(--transition-base);
-}
-
-.brand-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: var(--spacing-2);
-}
-
-.brand-subtitle {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-lg);
-}
-
 /* Platform specific styles */
 .ios {
   font-family: var(--platform-font);
 }
 
-.ios .brand-title {
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
 .android {
   font-family: var(--platform-font);
-}
-
-.android .brand-title {
-  font-weight: 500;
-  letter-spacing: 0.02em;
 }
 
 /* Responsive adjustments */
@@ -103,27 +78,11 @@ const handleSubmit = async ({ email, password, isRegistering }) => {
   }
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* Mobile height handling */
 @supports (-webkit-touch-callout: none) {
   .login-view {
-    /* Remove min-height: -webkit-fill-available since we're using dynamic height */
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     overflow-y: auto;
   }
 }

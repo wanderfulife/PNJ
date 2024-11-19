@@ -1,13 +1,7 @@
-// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/useAuthStore'
 
-// Route components
-const LoginView = () => import('../views/LoginView.vue')
-const ChatView = () => import('../views/ChatView.vue')
-const SettingsView = () => import('../views/SettingsView.vue')
-
-// Routes configuration
+// Lazy-loaded route components with consistent naming
 const routes = [
   {
     path: '/',
@@ -16,7 +10,7 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: LoginView,
+    component: () => import('../views/LoginView.vue'),
     meta: { 
       requiresGuest: true,
       title: 'Login'
@@ -25,7 +19,7 @@ const routes = [
   {
     path: '/chat',
     name: 'Chat',
-    component: ChatView,
+    component: () => import('../views/ChatView.vue'),
     meta: { 
       requiresAuth: true,
       title: 'Chat'
@@ -34,7 +28,7 @@ const routes = [
   {
     path: '/settings',
     name: 'Settings',
-    component: SettingsView,
+    component: () => import('../views/SettingsView.vue'),
     meta: {
       requiresAuth: true,
       title: 'Settings'
@@ -46,38 +40,47 @@ const routes = [
   }
 ]
 
-// Router instance
+// Router instance with history mode
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    }
+    return { top: 0, behavior: 'smooth' }
+  }
 })
 
+// Navigation guard
 router.beforeEach(async (to, from, next) => {
+  // Get auth requirements
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest)
   
-  // Set page title
+  // Update document title
   document.title = to.meta.title ? `PNJ - ${to.meta.title}` : 'PNJ'
   
   const authStore = useAuthStore()
   
-  // Si l'état d'authentification n'est pas encore initialisé, attendez
+  // Wait for auth initialization if needed
   if (!authStore.isInitialized) {
     await authStore.checkAuthState()
   }
   
+  // Handle auth navigation
   if (requiresAuth && !authStore.user) {
-    next({ 
+    return next({ 
       path: '/login',
       query: { redirect: to.fullPath }
     })
   }
-  else if (requiresGuest && authStore.user) {
-    next('/chat')
+  
+  if (requiresGuest && authStore.user) {
+    return next('/chat')
   }
-  else {
-    next()
-  }
+  
+  next()
 })
 
 export default router

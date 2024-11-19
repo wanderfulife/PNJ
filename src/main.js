@@ -4,35 +4,53 @@ import App from './App.vue'
 import router from './router'
 import { initializeFirebase } from './firebase/config'
 
-// Create application
+// Create application instance and store once
 const app = createApp(App)
 const pinia = createPinia()
 
-// Error handler
-app.config.errorHandler = (err, vm, info) => {
-  console.error('Global error:', err)
-  console.error('Component:', vm)
-  console.error('Info:', info)
+// Centralized error handling
+const handleError = (err, vm, info) => {
+  console.error('Error:', {
+    message: err,
+    component: vm?._isVue ? {
+      name: vm.$options?.name,
+      props: vm.$props
+    } : vm,
+    info
+  })
 }
 
-// Warning handler
+// Configure app-wide handlers
+app.config.errorHandler = handleError
 app.config.warnHandler = (msg, vm, trace) => {
-  console.warn('Global warning:', msg)
-  console.warn('Component:', vm)
-  console.warn('Trace:', trace)
+  console.warn('Warning:', {
+    message: msg,
+    component: vm?._isVue ? {
+      name: vm.$options?.name,
+      props: vm.$props
+    } : vm,
+    trace
+  })
 }
 
-// Initialize Firebase
+// Initialize app with error boundary
 const initApp = async () => {
   try {
     await initializeFirebase()
+    
+    // Install plugins
     app.use(pinia)
     app.use(router)
+    
+    // Mount application
     app.mount('#app')
   } catch (error) {
-    console.error('Error initializing app:', error)
+    handleError(error, null, 'App initialization failed')
   }
 }
 
 // Start the application
 initApp()
+
+// Export for testing purposes if needed
+export { app, pinia }

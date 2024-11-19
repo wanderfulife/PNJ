@@ -33,12 +33,10 @@ onMounted(async () => {
 
 <template>
   <div id="app" :class="authStore.platform">
-    <!-- Initial loading screen -->
     <div v-if="!appReady" class="loading-screen">
       <div class="loading-spinner"></div>
     </div>
 
-    <!-- Main content -->
     <router-view 
       v-else 
       v-slot="{ Component }"
@@ -51,16 +49,13 @@ onMounted(async () => {
 </template>
 
 <style>
-/* Ces variables CSS remplacent style.css */
 :root {
-  /* Couleurs de base */
+  /* Colors */
   --color-primary: #8B5CF6;
   --color-primary-dark: #7C3AED;
   --color-success: #10B981;
   --color-error: #EF4444;
   --color-warning: #F59E0B;
-
-  /* Couleurs de fond et texte */
   --color-background: #111827;
   --color-surface: #1F2937;
   --color-surface-light: #374151;
@@ -68,7 +63,7 @@ onMounted(async () => {
   --color-text-secondary: #9CA3AF;
   --color-border: #374151;
 
-  /* Typographie */
+  /* Typography */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -76,7 +71,7 @@ onMounted(async () => {
   --font-size-lg: 1.125rem;
   --font-size-xl: 1.25rem;
 
-  /* Espacement */
+  /* Spacing */
   --spacing-1: 0.25rem;
   --spacing-2: 0.5rem;
   --spacing-3: 0.75rem;
@@ -96,25 +91,22 @@ onMounted(async () => {
   --z-popup: 40;
 }
 
-/* Styles de base */
+/* Base styles */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html {
+html, body {
   height: 100%;
-  font-family: var(--font-sans);
-  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  height: 100%;
-  margin: 0;
   background-color: var(--color-background);
   color: var(--color-text);
   line-height: 1.5;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -125,24 +117,20 @@ body {
   flex-direction: column;
 }
 
-/* Platform-specific variables */
+/* Platform styles */
 .ios {
-  /* iOS specific */
-
   --platform-radius: 10px;
   --platform-primary: #007AFF;
   --platform-font: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .android {
-  /* Android specific */
   --platform-radius: 4px;
   --platform-primary: #3DDC84;
   --platform-font: Roboto, sans-serif;
 }
 
 .web {
-  /* Web specific */
   --platform-radius: 8px;
   --platform-primary: var(--color-primary);
   --platform-font: var(--font-sans);
@@ -167,7 +155,7 @@ body {
   animation: spin 1s linear infinite;
 }
 
-/* Page transitions */
+/* Transitions */
 .page-transition-enter-active,
 .page-transition-leave-active {
   transition: opacity var(--transition-base);
@@ -178,7 +166,7 @@ body {
   opacity: 0;
 }
 
-/* Utilitaires d'accessibilité */
+/* Accessibility */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -191,7 +179,7 @@ body {
   border: 0;
 }
 
-/* Optimisations tactiles */
+/* Touch optimizations */
 @media (hover: none) {
   * {
     cursor: default !important;
@@ -199,17 +187,15 @@ body {
 
   input, 
   button {
-    font-size: 16px; /* Prevent zoom on iOS */
+    font-size: 16px;
     touch-action: manipulation;
   }
 }
 
-/* Animations */
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-/* Support des préférences de mouvement réduit */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
