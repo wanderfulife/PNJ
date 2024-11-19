@@ -218,7 +218,7 @@ const handleToggleSetting = async (key, value) => {
 <style scoped>
 .settings-view {
   min-height: 100vh;
-  background-color: var(--color-background, #111827);
+  background-color: var(--color-background, #1827);
   color: var(--color-text, #F3F4F6);
 }
 
@@ -231,8 +231,6 @@ const handleToggleSetting = async (key, value) => {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background-color: var(--color-surface, #1F2937);
-  border-bottom: 1px solid var(--color-border, #374151);
 }
 
 .header-button {
