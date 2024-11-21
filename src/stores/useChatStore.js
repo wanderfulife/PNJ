@@ -25,74 +25,111 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  const createChat = async (recipientEmail) => {
-    try {
-      loading.value = true
-      error.value = null
+// Dans useChatStore.js, modifiez la fonction createChat comme suit :
+const createChat = async (recipientEmail) => {
+  try {
+    loading.value = true
+    error.value = null
 
-      // Trouver l'utilisateur par email
-      const usersRef = dbRef(database, 'users')
+    // Vérification de l'authentification
+    if (!authStore.user?.uid) {
+      throw new Error('User must be authenticated to create a chat')
+    }
+
+    console.log('Creating chat with recipient email:', recipientEmail)
+    console.log('Current user:', authStore.user)
+
+    // Recherche de l'utilisateur par email avec gestion d'erreur améliorée
+    const usersRef = dbRef(database, 'users')
+    let recipientData
+    let recipientId
+
+    try {
       const userQuery = query(usersRef, orderByChild('email'), equalTo(recipientEmail))
       const snapshot = await get(userQuery)
       
       if (!snapshot.exists()) {
-        throw new Error('User not found')
+        throw new Error(`No user found with email: ${recipientEmail}`)
       }
 
-      const recipientId = Object.keys(snapshot.val())[0]
-      
-      // Vérifier si un chat existe déjà
-      const existingChat = chats.value.find(chat => 
-        chat.participants && 
-        chat.participants[recipientId] && 
-        chat.participants[authStore.user.uid]
-      )
+      // Extraire les données du destinataire
+      const userData = snapshot.val()
+      recipientId = Object.keys(userData)[0]
+      recipientData = userData[recipientId]
 
-      if (existingChat) {
-        selectChat(existingChat.id)
-        return existingChat.id
-      }
-      
-      // Créer nouveau chat
-      const newChatRef = push(dbRef(database, 'chats'))
-      const chatId = newChatRef.key
-      
-      const chatData = {
-        id: chatId,
-        createdAt: new Date().toISOString(),
-        participants: {
-          [authStore.user.uid]: true,
-          [recipientId]: true
-        },
-        lastMessage: null
-      }
+      console.log('Found recipient:', { recipientId, recipientData })
+    } catch (e) {
+      console.error('Error finding recipient:', e)
+      throw new Error('Failed to find recipient user')
+    }
 
+    // Vérification du même utilisateur
+    if (recipientId === authStore.user.uid) {
+      throw new Error('Cannot create chat with yourself')
+    }
+
+    // Vérification du chat existant
+    const existingChat = chats.value.find(chat => 
+      chat.participants && 
+      chat.participants[recipientId] && 
+      chat.participants[authStore.user.uid]
+    )
+
+    if (existingChat) {
+      console.log('Found existing chat:', existingChat)
+      selectChat(existingChat.id)
+      return existingChat.id
+    }
+
+    // Création du nouveau chat
+    const chatData = {
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      participants: {
+        [authStore.user.uid]: true,
+        [recipientId]: true
+      }
+    }
+
+    console.log('Creating new chat with data:', chatData)
+
+    // Créer la référence et obtenir l'ID
+    const newChatRef = push(dbRef(database, 'chats'))
+    const chatId = newChatRef.key
+
+    try {
+      // Écriture des données du chat
       await set(newChatRef, chatData)
-      
-      // Ajouter chat à l'état local
-      const recipientData = snapshot.val()[recipientId]
+      console.log('Successfully created chat:', chatId)
+
+      // Mise à jour de l'état local
       const newChat = {
         id: chatId,
         name: recipientData.displayName || recipientEmail,
         avatar: recipientData.photoURL || "/api/placeholder/48/48",
         online: false,
         lastMessage: "",
-        lastMessageTime: "",
+        lastMessageTime: chatData.createdAt,
         unreadCount: 0,
         participants: chatData.participants
       }
 
-      chats.value.push(newChat)
+      chats.value = [...chats.value, newChat]
       selectedChat.value = newChat
 
       return chatId
     } catch (e) {
-      error.value = e.message
-      throw e
-    } finally {
-      loading.value = false
+      console.error('Error writing chat data:', e)
+      throw new Error('Failed to create chat. Please try again.')
     }
+  } catch (e) {
+    console.error('Error in createChat:', e)
+    error.value = e.message
+    throw e
+  } finally {
+    loading.value = false
   }
+}
 
   const loadUserChats = async () => {
     try {
