@@ -7,8 +7,6 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp'
     }
   },
   build: {
@@ -33,7 +31,8 @@ export default defineConfig({
       'pinia',
       'vue-router',
       'firebase/app',
-      'firebase/auth'
+      'firebase/auth',
+      'firebase/database'
     ]
   },
   resolve: {

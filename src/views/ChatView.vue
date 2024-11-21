@@ -56,7 +56,7 @@ const handleSendMessage = async (message) => {
 onMounted(() => {
   window.addEventListener('resize', handleResize)
   handleResize()
-  chatStore.initializeChats()
+  chatStore.loadUserChats() // Changed from initializeChats to loadUserChats
 })
 
 onUnmounted(() => {

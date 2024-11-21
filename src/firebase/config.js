@@ -6,6 +6,7 @@ import {
   inMemoryPersistence,
   indexedDBLocalPersistence
 } from 'firebase/auth';
+import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
 import { Capacitor } from '@capacitor/core';
 
 const firebaseConfig = {
@@ -14,18 +15,30 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  databaseURL: "https://pnj-jay-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
 let app = null;
 let auth = null;
+let database = null;
 
 export const initializeFirebase = async () => {
-  if (auth) return { app, auth };
+  if (app) return { app, auth, database };
 
   try {
-    if (!app) {
-      app = initializeApp(firebaseConfig);
+    app = initializeApp(firebaseConfig);
+    database = getDatabase(app);
+
+    // Configure database settings
+    const dbConfig = {
+      synchronizeTabs: true,
+    };
+
+    if (import.meta.env.DEV) {
+      dbConfig.experimentalForceLongPolling = true;
+      // Uncomment if you want to use emulator
+      // connectDatabaseEmulator(database, 'localhost', 9000);
     }
 
     const platform = Capacitor.getPlatform();
@@ -44,7 +57,7 @@ export const initializeFirebase = async () => {
       });
     }
 
-    return { app, auth };
+    return { app, auth, database };
   } catch (error) {
     console.error('Firebase initialization error:', error);
     throw error;
@@ -52,7 +65,9 @@ export const initializeFirebase = async () => {
 };
 
 export const getFirebaseAuth = () => auth || getAuth(app);
+export const getFirebaseDatabase = () => database || getDatabase(app);
 
+// Initialize Firebase immediately
 initializeFirebase().catch(console.error);
 
-export { auth };
+export { auth, database };

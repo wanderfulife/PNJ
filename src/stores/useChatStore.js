@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { getDatabase, ref as dbRef, push, set, get, query, orderByChild, equalTo } from 'firebase/database'
 import { useAuthStore } from './useAuthStore'
 
 export const useChatStore = defineStore('chat', () => {
@@ -8,67 +9,83 @@ export const useChatStore = defineStore('chat', () => {
   const selectedChat = ref(null)
   const loading = ref(false)
   const error = ref(null)
+  
+  const database = getDatabase()
 
-  // Mock data pour l'exemple
-  const initializeChats = () => {
-    chats.value = [
-      {
-        id: 1,
-        name: "John Wander",
-        avatar: "/api/placeholder/48/48",
-        online: true,
-        lastMessage: "See you tomorrow at the meeting! 👋",
-        lastMessageTime: "01:29 AM",
-        unreadCount: 3,
-        messages: [
-          {
-            id: 1,
-            content: "Hey! How's the project coming along?",
-            sender: "john123",
-            time: "9:30 AM",
-            status: "read"
-          }
-        ]
-      },
-      // ... autres chats
-    ]
-  }
-
-  const selectChat = (chatId) => {
-    selectedChat.value = chats.value.find(chat => chat.id === chatId)
-  }
-
-  const sendMessage = async (chatId, content) => {
+  const createChat = async (recipientEmail) => {
     try {
-      const chat = chats.value.find(c => c.id === chatId)
-      if (!chat) return
+      loading.value = true
+      error.value = null
 
-      const newMessage = {
-        id: Date.now(),
-        content,
-        sender: authStore.user.uid,
-        time: new Date().toLocaleTimeString([], { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: true 
-        }),
-        status: 'sent'
+      // Find user by email
+      const usersRef = dbRef(database, 'users')
+      const userQuery = query(usersRef, orderByChild('email'), equalTo(recipientEmail))
+      const snapshot = await get(userQuery)
+      
+      if (!snapshot.exists()) {
+        throw new Error('User not found')
       }
 
-      chat.messages.push(newMessage)
-      chat.lastMessage = content
-      chat.lastMessageTime = newMessage.time
+      const recipientId = Object.keys(snapshot.val())[0]
       
-      // Simuler un délai réseau
-      setTimeout(() => {
-        newMessage.status = 'delivered'
-        // Forcer la réactivité
-        chats.value = [...chats.value]
-      }, 1000)
+      // Create new chat
+      const newChatRef = push(dbRef(database, 'chats'))
+      const chatId = newChatRef.key
+      
+      const chatData = {
+        id: chatId,
+        createdAt: new Date().toISOString(),
+        participants: {
+          [authStore.user.uid]: true,
+          [recipientId]: true
+        },
+        lastMessage: null
+      }
 
+      await set(newChatRef, chatData)
+      
+      // Add chat to local state
+      const recipientData = snapshot.val()[recipientId]
+      chats.value.push({
+        id: chatId,
+        name: recipientData.displayName || recipientEmail,
+        avatar: recipientData.photoURL || "/api/placeholder/48/48",
+        online: false,
+        lastMessage: "",
+        lastMessageTime: "",
+        unreadCount: 0
+      })
+
+      return chatId
     } catch (e) {
       error.value = e.message
-      console.error('Error sending message:', e)
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const loadUserChats = async () => {
+    try {
+      loading.value = true
+      const userChatsRef = dbRef(database, 'chats')
+      const snapshot = await get(userChatsRef)
+      
+      if (snapshot.exists()) {
+        const chatsData = snapshot.val()
+        const userChats = Object.entries(chatsData)
+          .filter(([_, chat]) => chat.participants[authStore.user.uid])
+          .map(([id, chat]) => ({
+            id,
+            // Add other chat properties
+          }))
+        
+        chats.value = userChats
+      }
+    } catch (e) {
+      error.value = e.message
+    } finally {
+      loading.value = false
     }
   }
 
@@ -77,8 +94,7 @@ export const useChatStore = defineStore('chat', () => {
     selectedChat,
     loading,
     error,
-    initializeChats,
-    selectChat,
-    sendMessage
+    createChat,
+    loadUserChats
   }
 })

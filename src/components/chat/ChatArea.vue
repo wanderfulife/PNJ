@@ -1,11 +1,16 @@
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import ChatHeader from "./ChatHeader.vue";
 import ChatInput from "./ChatInput.vue";
 import BaseMessage from "../ui/BaseMessage.vue";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useMessagesStore } from "@/stores/useMessagesStore";
+import { storeToRefs } from "pinia";
 
 const authStore = useAuthStore();
+const messagesStore = useMessagesStore();
+const { getMessages } = storeToRefs(messagesStore);
+
 const platformClass = computed(() => authStore.platform?.toLowerCase());
 
 const props = defineProps({
@@ -25,7 +30,7 @@ const props = defineProps({
 
 const emit = defineEmits(["back", "send"]);
 const messagesContainer = ref(null);
-const messages = ref(props.chat?.messages || []);
+const messages = computed(() => getMessages.value(props.chat.id));
 
 const scrollToBottom = async (smooth = true) => {
   await nextTick();
@@ -38,22 +43,29 @@ const scrollToBottom = async (smooth = true) => {
 };
 
 watch(
-  () => props.chat?.messages,
-  (newMessages) => {
-    if (newMessages) {
-      messages.value = newMessages;
-      scrollToBottom();
-    }
+  messages,
+  () => {
+    scrollToBottom();
   },
   { deep: true }
 );
 
-onMounted(() => {
+onMounted(async () => {
+  await messagesStore.subscribeToMessages(props.chat.id);
   scrollToBottom(false);
 });
 
-const handleSend = (message) => {
-  emit("send", message);
+onUnmounted(() => {
+  messagesStore.unsubscribeFromMessages(props.chat.id);
+});
+
+const handleSend = async (message) => {
+  try {
+    await messagesStore.sendMessage(props.chat.id, message);
+    emit("send", message);
+  } catch (error) {
+    console.error("Error sending message:", error);
+  }
 };
 
 const handleBack = () => {
@@ -76,7 +88,13 @@ const handleBack = () => {
             v-for="message in messages"
             :key="message.id"
             :content="message.content"
-            :timestamp="message.time"
+            :timestamp="
+              new Date(message.timestamp).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+              })
+            "
             :is-outgoing="message.sender === currentUserId"
             :status="message.status"
           />

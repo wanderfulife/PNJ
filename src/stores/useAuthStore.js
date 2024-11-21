@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { 
+import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -8,6 +8,7 @@ import {
   updateProfile,
   updateEmail
 } from 'firebase/auth'
+import { getDatabase, ref as dbRef, set, get } from 'firebase/database'
 import { getFirebaseAuth } from '../firebase/config'
 import { Preferences } from '@capacitor/preferences'
 import { Capacitor } from '@capacitor/core'
@@ -19,6 +20,31 @@ export const useAuthStore = defineStore('auth', () => {
   const isInitialized = ref(false)
   const platform = Capacitor.getPlatform()
 
+  // Create or update user in database
+  const createUserInDatabase = async (userData) => {
+    try {
+      const database = getDatabase()
+      const userRef = dbRef(database, `users/${userData.uid}`)
+
+      // Check if user exists
+      const snapshot = await get(userRef)
+      const existingData = snapshot.val()
+
+      const updatedData = {
+        email: userData.email,
+        displayName: userData.displayName || existingData?.displayName || null,
+        photoURL: userData.photoURL || existingData?.photoURL || null,
+        lastActive: new Date().toISOString(),
+        ...(!existingData && { createdAt: new Date().toISOString() })
+      }
+
+      await set(userRef, updatedData)
+    } catch (e) {
+      console.error('Error updating user in database:', e)
+      throw e
+    }
+  }
+
   // Methods
   const login = async (email, password) => {
     try {
@@ -26,12 +52,17 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null
       const auth = await getFirebaseAuth()
       const result = await signInWithEmailAndPassword(auth, email, password)
+
       user.value = {
         uid: result.user.uid,
         email: result.user.email,
         displayName: result.user.displayName,
         photoURL: result.user.photoURL
       }
+
+      // Update user data in database
+      await createUserInDatabase(user.value)
+
       await Preferences.set({
         key: 'user',
         value: JSON.stringify(user.value)
@@ -52,12 +83,17 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null
       const auth = await getFirebaseAuth()
       const result = await createUserWithEmailAndPassword(auth, email, password)
+
       user.value = {
         uid: result.user.uid,
         email: result.user.email,
         displayName: result.user.displayName,
         photoURL: result.user.photoURL
       }
+
+      // Create user in database
+      await createUserInDatabase(user.value)
+
       await Preferences.set({
         key: 'user',
         value: JSON.stringify(user.value)
@@ -77,6 +113,13 @@ export const useAuthStore = defineStore('auth', () => {
       loading.value = true
       error.value = null
       const auth = await getFirebaseAuth()
+
+      // Update last active timestamp before logout
+      if (user.value?.uid) {
+        const database = getDatabase()
+        await set(dbRef(database, `users/${user.value.uid}/lastActive`), new Date().toISOString())
+      }
+
       await Preferences.remove({ key: 'user' })
       await signOut(auth)
       user.value = null
@@ -95,7 +138,7 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null
       const auth = await getFirebaseAuth()
       const currentUser = auth.currentUser
-      
+
       if (!currentUser) throw new Error('No user logged in')
 
       await updateProfile(currentUser, profileData)
@@ -103,6 +146,15 @@ export const useAuthStore = defineStore('auth', () => {
         ...user.value,
         ...profileData
       }
+
+      // Update user data in database
+      await createUserInDatabase(user.value)
+
+      // Update local storage
+      await Preferences.set({
+        key: 'user',
+        value: JSON.stringify(user.value)
+      })
     } catch (e) {
       error.value = e.message
       throw e
@@ -117,11 +169,20 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null
       const auth = await getFirebaseAuth()
       const currentUser = auth.currentUser
-      
+
       if (!currentUser) throw new Error('No user logged in')
 
       await updateEmail(currentUser, newEmail)
       user.value.email = newEmail
+
+      // Update user data in database
+      await createUserInDatabase(user.value)
+
+      // Update local storage
+      await Preferences.set({
+        key: 'user',
+        value: JSON.stringify(user.value)
+      })
     } catch (e) {
       error.value = e.message
       throw e
@@ -133,10 +194,12 @@ export const useAuthStore = defineStore('auth', () => {
   // Initialize
   const checkAuthState = async () => {
     try {
+      // First try to get user from local storage
       const storedUser = await Preferences.get({ key: 'user' })
       if (storedUser.value) {
         user.value = JSON.parse(storedUser.value)
       }
+
       const auth = await getFirebaseAuth()
       onAuthStateChanged(auth, async (userData) => {
         if (userData) {
@@ -146,6 +209,10 @@ export const useAuthStore = defineStore('auth', () => {
             displayName: userData.displayName,
             photoURL: userData.photoURL
           }
+
+          // Update user data in database
+          await createUserInDatabase(user.value)
+
           await Preferences.set({
             key: 'user',
             value: JSON.stringify(user.value)
