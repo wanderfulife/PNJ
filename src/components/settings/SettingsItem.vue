@@ -1,11 +1,11 @@
 <!-- components/settings/SettingsItem.vue -->
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import ToggleSwitch from '../ui/ToggleSwitch.vue';
 
 const props = defineProps({
   icon: {
-    type: Object,
+    type: [Object, Function], // Allow both Object and Function types for icons
     required: true
   },
   title: {
@@ -20,7 +20,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  toggleValue: {
+  modelValue: {  // Add modelValue prop for v-model support
     type: Boolean,
     default: false
   },
@@ -34,15 +34,29 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['toggle', 'click']);
+const emit = defineEmits(['toggle', 'click', 'update:modelValue']);
 
 const isClickable = computed(() => props.route || !props.hasToggle);
+
+// Local state for toggle value
+const localValue = ref(props.modelValue);
+
+// Watch for external changes
+watch(() => props.modelValue, (newVal) => {
+  localValue.value = newVal;
+});
 
 const handleClick = () => {
   if (props.disabled) return;
   if (isClickable.value) {
     emit('click');
   }
+};
+
+const handleToggle = (value) => {
+  localValue.value = value;
+  emit('update:modelValue', value);
+  emit('toggle', value);
 };
 </script>
 
@@ -59,7 +73,7 @@ const handleClick = () => {
       <component
         :is="icon"
         class="settings-item__icon"
-        :class="{ 'settings-item__icon--active': hasToggle && toggleValue }"
+        :class="{ 'settings-item__icon--active': hasToggle && modelValue }"
         aria-hidden="true"
       />
       
@@ -73,10 +87,10 @@ const handleClick = () => {
 
     <ToggleSwitch
       v-if="hasToggle"
-      v-model="modelValue"
+      :model-value="modelValue"
       :disabled="disabled"
       :label="title"
-      @update:modelValue="$emit('toggle', $event)"
+      @update:model-value="handleToggle"
     />
     
     <div v-else-if="route" class="settings-item__chevron">
@@ -164,21 +178,18 @@ const handleClick = () => {
   height: 1.25rem;
 }
 
-/* Styles spécifiques aux appareils tactiles */
 @media (hover: hover) {
   .settings-item--clickable:hover {
     background-color: var(--color-surface-light, #374151);
   }
 }
 
-/* Styles spécifiques aux appareils tactiles */
 @media (hover: none) {
   .settings-item--clickable:active {
     background-color: var(--color-surface-light, #374151);
   }
 }
 
-/* Réduire les animations si l'utilisateur le préfère */
 @media (prefers-reduced-motion: reduce) {
   .settings-item {
     transition: none;

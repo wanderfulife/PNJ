@@ -6,35 +6,64 @@ import { useAuthStore } from "@/stores/useAuthStore";
 const authStore = useAuthStore();
 const emit = defineEmits(["send"]);
 
+const props = defineProps({
+  disabled: {
+    type: Boolean,
+    default: false
+  }
+});
+
 const message = ref("");
 const isRecording = ref(false);
+const error = ref(null);
 
 const platformClass = computed(() => authStore.platform?.toLowerCase());
 
 const handleSend = () => {
-  if (!message.value.trim()) return;
-  emit("send", message.value.trim());
-  message.value = "";
+  try {
+    if (!message.value.trim() || props.disabled) return;
+    emit("send", message.value.trim());
+    message.value = "";
+    error.value = null;
+  } catch (err) {
+    console.error('Error in handleSend:', err);
+    error.value = 'Failed to send message';
+  }
 };
 
 const handleKeydown = (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    handleSend();
+  try {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  } catch (err) {
+    console.error('Error in handleKeydown:', err);
+    error.value = 'Failed to process input';
   }
 };
 </script>
 
 <template>
   <div class="chat-input-wrapper" :class="[platformClass]">
+    <div v-if="error" class="error-message">{{ error }}</div>
+    
     <div class="chat-input-container">
       <!-- Action buttons group -->
       <div class="actions-group">
-        <button class="action-btn" aria-label="Attach file">
+        <button 
+          class="action-btn" 
+          aria-label="Attach file"
+          :disabled="disabled"
+        >
           <Paperclip class="icon" aria-hidden="true" />
         </button>
 
-        <button class="action-btn" aria-label="Send photo">
+        <button 
+          class="action-btn" 
+          aria-label="Send photo"
+          :disabled="disabled"
+        >
           <Image class="icon" aria-hidden="true" />
         </button>
       </div>
@@ -46,13 +75,18 @@ const handleKeydown = (e) => {
           type="text"
           placeholder="Type a message"
           class="message-input"
+          :disabled="disabled"
           @keydown="handleKeydown"
         />
       </div>
 
       <!-- Right actions group -->
       <div class="actions-group">
-        <button class="action-btn" aria-label="Choose emoji">
+        <button 
+          class="action-btn" 
+          aria-label="Choose emoji"
+          :disabled="disabled"
+        >
           <Smile class="icon" aria-hidden="true" />
         </button>
 
@@ -60,6 +94,7 @@ const handleKeydown = (e) => {
           class="action-btn"
           :class="{ recording: isRecording }"
           aria-label="Record voice message"
+          :disabled="disabled"
         >
           <Mic class="icon" aria-hidden="true" />
         </button>
@@ -67,6 +102,7 @@ const handleKeydown = (e) => {
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .chat-input-wrapper {

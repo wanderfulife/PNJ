@@ -109,28 +109,32 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = async () => {
-    try {
-      loading.value = true
-      error.value = null
-      const auth = await getFirebaseAuth()
+  try {
+    loading.value = true
+    error.value = null
+    const auth = await getFirebaseAuth()
 
-      // Update last active timestamp before logout
-      if (user.value?.uid) {
-        const database = getDatabase()
-        await set(dbRef(database, `users/${user.value.uid}/lastActive`), new Date().toISOString())
-      }
-
-      await Preferences.remove({ key: 'user' })
-      await signOut(auth)
-      user.value = null
-    } catch (e) {
-      console.error(`[${platform}] Logout error:`, e)
-      error.value = e.message
-      throw e
-    } finally {
-      loading.value = false
+    // Update last active timestamp before logout
+    if (user.value?.uid) {
+      const database = getDatabase()
+      await set(dbRef(database, `users/${user.value.uid}/lastActive`), new Date().toISOString())
     }
+
+    // Clean up stores before logout
+    const messagesStore = useMessagesStore()
+    messagesStore.reset()
+
+    await Preferences.remove({ key: 'user' })
+    await signOut(auth)
+    user.value = null
+  } catch (e) {
+    console.error(`[${platform}] Logout error:`, e)
+    error.value = e.message
+    throw e
+  } finally {
+    loading.value = false
   }
+}
 
   const updateUserProfile = async (profileData) => {
     try {

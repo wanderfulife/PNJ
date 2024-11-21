@@ -17,24 +17,41 @@ export const useMessagesStore = defineStore('messages', () => {
   })
 
   const subscribeToMessages = async (chatId) => {
+    // Don't subscribe if user is not authenticated
+    if (!authStore.user?.uid) {
+      console.log('Cannot subscribe to messages: User not authenticated')
+      return
+    }
+
+    // Don't create duplicate listeners
     if (activeListeners.value.has(chatId)) return
 
-    const messagesRef = dbRef(database, `messages/${chatId}`)
-    
-    const callback = onValue(messagesRef, (snapshot) => {
-      const data = snapshot.val()
-      if (data) {
-        messages.value = {
-          ...messages.value,
-          [chatId]: Object.values(data)
+    try {
+      const messagesRef = dbRef(database, `messages/${chatId}`)
+      
+      const callback = onValue(messagesRef, (snapshot) => {
+        const data = snapshot.val()
+        if (data) {
+          messages.value = {
+            ...messages.value,
+            [chatId]: Object.values(data)
+          }
         }
-      }
-    }, (err) => {
-      console.error('Error subscribing to messages:', err)
-      error.value = err.message
-    })
+      }, (err) => {
+        // Only log error if user is still authenticated
+        if (authStore.user?.uid) {
+          console.error('Error subscribing to messages:', err)
+          error.value = err.message
+        }
+      })
 
-    activeListeners.value.set(chatId, callback)
+      activeListeners.value.set(chatId, callback)
+    } catch (err) {
+      if (authStore.user?.uid) {
+        console.error('Error setting up message subscription:', err)
+        error.value = err.message
+      }
+    }
   }
 
   const unsubscribeFromMessages = (chatId) => {
@@ -45,7 +62,20 @@ export const useMessagesStore = defineStore('messages', () => {
     }
   }
 
+  const unsubscribeFromAllMessages = () => {
+    activeListeners.value.forEach((listener, chatId) => {
+      off(dbRef(database, `messages/${chatId}`), 'value', listener)
+    })
+    activeListeners.value.clear()
+    messages.value = {}
+    error.value = null
+  }
+
   const sendMessage = async (chatId, content) => {
+    if (!authStore.user?.uid) {
+      throw new Error('Must be authenticated to send messages')
+    }
+
     try {
       loading.value = true
       error.value = null
@@ -73,12 +103,22 @@ export const useMessagesStore = defineStore('messages', () => {
   }
 
   const updateMessageStatus = async (chatId, messageId, status) => {
+    if (!authStore.user?.uid) return
+
     try {
       const messageRef = dbRef(database, `messages/${chatId}/${messageId}/status`)
       await set(messageRef, status)
     } catch (e) {
       console.error('Error updating message status:', e)
     }
+  }
+
+  // Reset store state
+  const reset = () => {
+    unsubscribeFromAllMessages()
+    messages.value = {}
+    loading.value = false
+    error.value = null
   }
 
   return {
@@ -89,6 +129,8 @@ export const useMessagesStore = defineStore('messages', () => {
     sendMessage,
     subscribeToMessages,
     unsubscribeFromMessages,
-    updateMessageStatus
+    unsubscribeFromAllMessages,
+    updateMessageStatus,
+    reset
   }
 })
