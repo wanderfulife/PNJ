@@ -99,45 +99,57 @@ export const useChatStore = defineStore('chat', () => {
       loading.value = true
       error.value = null
       
-      // Récupérer tous les chats où l'utilisateur est participant
-      const userChatsRef = query(
-        dbRef(database, 'chats'),
-        orderByChild(`participants/${authStore.user.uid}`),
-        equalTo(true)
-      )
-      
-      const snapshot = await get(userChatsRef)
+      // Charger tous les chats
+      const chatsRef = dbRef(database, 'chats')
+      const snapshot = await get(chatsRef)
       
       if (snapshot.exists()) {
         const chatsData = snapshot.val()
         const loadedChats = []
-
-        // Charger les détails des participants pour chaque chat
+        const currentUserId = authStore.user.uid
+  
+        // Filtrer et charger les chats de l'utilisateur
         for (const [chatId, chat] of Object.entries(chatsData)) {
-          const participantIds = Object.keys(chat.participants || {})
-            .filter(id => id !== authStore.user.uid)
-
-          const participantPromises = participantIds.map(async (participantId) => {
-            const userSnapshot = await get(dbRef(database, `users/${participantId}`))
-            return userSnapshot.val()
-          })
-
-          const participants = await Promise.all(participantPromises)
-          const participant = participants[0] // Prendre le premier participant pour les chats en 1:1
-
-          loadedChats.push({
-            id: chatId,
-            name: participant?.displayName || participant?.email || 'Unknown User',
-            avatar: participant?.photoURL || "/api/placeholder/48/48",
-            online: !!participant?.online,
-            lastMessage: chat.lastMessage?.content || '',
-            lastMessageTime: chat.lastMessage?.timestamp || chat.createdAt,
-            unreadCount: 0,
-            participants: chat.participants
-          })
+          if (chat.participants?.[currentUserId]) {
+            // Trouver l'autre participant
+            const otherParticipantId = Object.keys(chat.participants)
+              .find(id => id !== currentUserId)
+  
+            if (otherParticipantId) {
+              try {
+                // Charger les infos de l'autre participant
+                const userRef = dbRef(database, `users/${otherParticipantId}`)
+                const userSnapshot = await get(userRef)
+                const userData = userSnapshot.val()
+  
+                if (userData) {
+                  loadedChats.push({
+                    id: chatId,
+                    name: userData.displayName || userData.email || 'Unknown User',
+                    avatar: userData.photoURL || "/api/placeholder/48/48",
+                    online: !!userData.lastActive && 
+                           (new Date().getTime() - new Date(userData.lastActive).getTime()) < 300000, // 5 minutes
+                    lastMessage: chat.lastMessage?.content || '',
+                    lastMessageTime: chat.lastMessage?.timestamp || chat.createdAt,
+                    unreadCount: 0,
+                    participants: chat.participants
+                  })
+                }
+              } catch (userError) {
+                console.error(`Error loading user data for chat ${chatId}:`, userError)
+              }
+            }
+          }
         }
-
-        chats.value = loadedChats
+  
+        // Trier les chats du plus récent au plus ancien
+        chats.value = loadedChats.sort((a, b) => {
+          const timeA = new Date(a.lastMessageTime || 0).getTime()
+          const timeB = new Date(b.lastMessageTime || 0).getTime()
+          return timeB - timeA
+        })
+      } else {
+        chats.value = []
       }
     } catch (e) {
       console.error('Error loading chats:', e)
