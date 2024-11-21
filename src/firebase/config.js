@@ -6,8 +6,26 @@ import {
   inMemoryPersistence,
   indexedDBLocalPersistence
 } from 'firebase/auth';
-import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
+import { getDatabase } from 'firebase/database';
 import { Capacitor } from '@capacitor/core';
+
+// Helper function to validate environment variables
+const validateEnvVariables = () => {
+  const requiredVars = [
+    'VITE_FIREBASE_API_KEY',
+    'VITE_FIREBASE_AUTH_DOMAIN',
+    'VITE_FIREBASE_PROJECT_ID',
+    'VITE_FIREBASE_STORAGE_BUCKET',
+    'VITE_FIREBASE_MESSAGING_SENDER_ID',
+    'VITE_FIREBASE_APP_ID'
+  ];
+
+  const missingVars = requiredVars.filter(varName => !import.meta.env[varName]);
+  
+  if (missingVars.length > 0) {
+    throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+  }
+}
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -27,34 +45,36 @@ export const initializeFirebase = async () => {
   if (app) return { app, auth, database };
 
   try {
+    // Validate environment variables before initialization
+    validateEnvVariables();
+
+    // Initialize Firebase app
     app = initializeApp(firebaseConfig);
+    
+    // Initialize database
     database = getDatabase(app);
-
-    // Configure database settings
-    const dbConfig = {
-      synchronizeTabs: true,
-    };
-
-    if (import.meta.env.DEV) {
-      dbConfig.experimentalForceLongPolling = true;
-      // Uncomment if you want to use emulator
-      // connectDatabaseEmulator(database, 'localhost', 9000);
-    }
 
     const platform = Capacitor.getPlatform();
     
-    if (platform === 'ios') {
-      auth = initializeAuth(app, {
-        persistence: inMemoryPersistence
-      });
-    } else { 
-      auth = initializeAuth(app, {
-        persistence: [
-          indexedDBLocalPersistence,
-          browserLocalPersistence,
-          inMemoryPersistence
-        ]
-      });
+    try {
+      // Initialize auth with appropriate persistence
+      if (platform === 'ios') {
+        auth = initializeAuth(app, {
+          persistence: inMemoryPersistence
+        });
+      } else { 
+        auth = initializeAuth(app, {
+          persistence: [
+            indexedDBLocalPersistence,
+            browserLocalPersistence,
+            inMemoryPersistence
+          ]
+        });
+      }
+    } catch (authError) {
+      console.error('Auth initialization error:', authError);
+      // Fallback to basic auth if custom initialization fails
+      auth = getAuth(app);
     }
 
     return { app, auth, database };
@@ -64,10 +84,23 @@ export const initializeFirebase = async () => {
   }
 };
 
-export const getFirebaseAuth = () => auth || getAuth(app);
+export const getFirebaseAuth = () => {
+  if (!auth && app) {
+    try {
+      auth = getAuth(app);
+    } catch (error) {
+      console.error('Error getting Firebase auth:', error);
+      throw error;
+    }
+  }
+  return auth;
+};
+
 export const getFirebaseDatabase = () => database || getDatabase(app);
 
-// Initialize Firebase immediately
-initializeFirebase().catch(console.error);
+// Initialize Firebase immediately with error handling
+initializeFirebase().catch(error => {
+  console.error('Firebase initialization failed:', error.message);
+});
 
 export { auth, database };
