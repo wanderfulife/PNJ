@@ -273,4 +273,26 @@ const handleKeydown = (e) => {
 .action-btn:active .icon {
   animation: subtle-bounce 0.2s ease;
 }
+
+.error-message {
+  background-color: #ef4444;
+  color: white;
+  padding: 0.5rem;
+  text-align: center;
+  animation: slideIn 0.3s ease;
+}
+
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.message-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: rgba(31, 41, 55, 0.2);
+}
+
 </style>
