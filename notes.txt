@@ -2,8 +2,9 @@
 CLEANAGE SUR LES COULEURS, COMPONENTS, GLOBALES
 finir possible configuration du firebase --> tost
 improve ui chatview etc, like bolt screenshots
-improve message ui and accessibility 
+improve message ui sur le coté / date / photo
 fix difference ui android/ios/web
+IA
 ------------------------------
 21/11/24
 
